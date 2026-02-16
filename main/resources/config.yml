@@ -1,0 +1,34 @@
+CSPotionEffect:
+  strength-damage-multiplier:
+    '1': 1.2
+    '2': 1.4
+    '3': 1.6
+    '4': 1.8
+    '5': 2.0
+  weakness-damage-multiplier:
+    '1': 0.8
+    '2': 0.6
+    '3': 0.4
+    '4': 0.2
+    '5': 0
+
+CSEReloadBar:
+  Enable: true
+  UpdateInterval: 2
+  CompleteMessageDuration: 0
+  ShowTimeAdjustment: true
+  ShowReloadTime: false
+
+Trails:
+  Enable: true
+  Debug: false
+
+Projectiles:
+  Enable: true
+  Debug: false
+
+SpikeElements:
+  Enable: true
+  Debug: false
+
+debug: false

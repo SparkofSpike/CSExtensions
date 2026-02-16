@@ -1,0 +1,8 @@
+Group_Default:
+  ReloadMessage: '&7&l武器装填中 %reloadbar% &7&l%timeleft%'
+  ReloadCompleteMessage: '&7&l装填完毕'
+  ReloadFailedMessage: '&c&l装填失败'
+  Color_PGB: c
+  Color_BGC: 7
+  ReloadSymbol: '※'
+  ReloadSymbolAmount: 20

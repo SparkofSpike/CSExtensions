@@ -1,0 +1,78 @@
+#To be honest, I really don't want to write examples.
+#This is truly the most boring part of all the processes.
+#And besides, my plugin probably won't be used by anyone, right? Lol.
+#Of course, if you actually saw this comment, it means that you did go to GitHub to download my plugin...
+#Good luck to you! Because I never really maintain plugins in a proper way.
+#I just write whatever comes to my mind, without any logic at all. Lol.
+
+#OK, the first module: Conflict_Groups.
+#Well, I don't think I need to provide too much introduction about it.
+#All its configurations are exactly as they seem.
+Conflict_Groups:
+  Attack_Limit:
+    Limit: 1
+    Message_Exceeded: "&cWhy u equip this two accessories?"
+    Included: [AttackAccessory1,AttackAccessory2]
+#Next, accessories.Again, it's just the literal meaning...
+#Ah, when I think about it like this, it seems like I don't need to explain anything at all.
+#That's great.
+#I'll still give a brief explanation: name, material, data, lore …… I won't explain those.
+#The following ones like damage, reload, spread, are all for Crackshot weapons,
+#The first parameter is the condition, the second is the coefficient, and the third is the operator.
+#The condition can use the AND, OR, and NOT algorithms.
+#However, it should be noted that due to the limitations of YAML files, bugs may sometimes occur.
+#It's because "!" and "&" are regarded as reserved characters in YAML, rather than our operator.
+#Wrapping the entire expression with parentheses will solve the problem. See the example.
+#The available operators are ADD, MUL, FIX, and actually there's also FLAT.
+#But I don't recommend you use it because I haven't tested it myself.
+#Next, the health_adjustment and weight module... Just write the numbers.
+#The value of health_adjustment determines how much the player's maximum health will increase.
+#You can also write a negative number to deduct from the maximum value.
+#Noted that the player's health cannot be lower than 0. Relevant mechanism has been included.
+#When the weight is 1, the players unable to move as their movement speed is reduced by 100%.
+#On the contrary, when -1, the players will run extremely fast as the speed is increased by 100%.
+#You might be wondering why it can't be configured as flexibly as the others...
+#Good question. You'll ask similar questions later. The answer is simple -
+#I'm too lazy.
+#The final module, mythic, an epic bad shit, my wildest invention.Depend on Nythicmobs.
+#How can you use it? Just use it as you're using MythicMobs.
+#Format: - SkillName Targeter Trigger Condition
+#Targeters Available: @Shooter/@Self,@Victim,@Trigger,@Hitlocation
+#Triggers Available: ~ontimer:x,ondamaged,onattack,onshoot,oncrit,onheadshot,onreload,onhitblock
+#Conditions Available: ……Eh, in fact, it only supports the above tag conditions.
+#It should be noted that MM skills triggered by CSE will ignore all built-in conditions.
+#So if you want to retain the built-in conditions of the MM skill, you should do it like this:
+#In Mythicmobs Skill Configuration YAML:
+#  SkillTriggeredByCSE:
+#    Skills:
+#      - Skill:TrueSkill
+#  TrueSkill:
+#    Cooldown: 9999
+#    Conditions:
+#      - YourCondition
+#    Skills:
+#      - YourSkillLine
+#Just Write like this.
+#OK, we've finally finished the introduction. I'm so exhausted.
+accessories:
+  attack_ring:
+    name: '&6攻击戒指'
+    material: GOLD_NUGGET
+    data: 0
+    lore:
+      - 'L1'
+      - 'L2'
+    damage:
+      - (!(Fire||Ice)&&Magic) 10 add
+      - all 1.5 mul
+    reload:
+      - fire 1 add
+      - all 1.5 mul
+    spread:
+      - fire 1 add
+      - all 1.5 mul
+    health_adjustment: 100
+    weight: -1
+    armor: false
+    mythic:
+      - KickYourAss @self ~onAttack (TrueMelee||Fire)

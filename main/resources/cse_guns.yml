@@ -1,0 +1,75 @@
+# ========================
+# ID:
+#  Template: <id/true>
+#  Tag: <Tag1,Tag2,Tag3,……>
+#  BarMessageGroup: <id>
+#  Mythic:
+#    - Skillname Targeter Trigger
+#  HealthAdjust:
+#    Enabled: <true/false>
+#    HealSelfInstant: <Amount>-<When>,……
+#    HealSelfConstant: <Amount>-<Amount>-<When>,……
+#    HealTargetInstant: <Amount>,……
+#    HealTargetConstant: <Amount>-<Amount>,……
+#    DamageSelfInstant: <Amount>-<When>-<true/false>,……
+#    DamageSelfConstant: <Amount>-<Amount>-<When>-<true/false>,……
+#    DamageTargetInstant: <Amount>-<When>-<true/false>,……
+#    DamageTargetConstant: <Amount>-<Amount>-<When>-<true/false>,……
+#  Projectiles:
+#    Hidden: <true/false>
+#    Noknock: <none/players/mobs/all>
+#    Penetrate:
+#      Enabled: <true/false>
+#      Number: <Amount>
+#      VelocityCoef: <Amount>
+#      DamageCoef: <Amount>
+#    Return:
+#      Enabled: <true/false>
+#      Acceleration: <Amount>
+#      TrackShooter: <true/false>
+#      TriggerOnBlock: <true/false>
+#    Bounce:
+#      Enabled: <true/false>
+#      MaxBounces: <Amount>
+#      VelocityCoef: <Amount>
+#      DamageCoef: <Amount>
+#      RandomAngle: <Amount>
+#      AutoAimNearest: <true/false>
+#      AutoAimRadius: <true/false>
+#    Homing:
+#      Enabled: <true/false>
+#      NoBlockBetween: <true/false>
+#      Range: <Amount>
+#      Angle: <Amount>
+#      TurnSpeed: <Amount>
+#      Update: <always/penetrated/bounced/killed/never>
+#      InitialLock: <true/false>
+#  Trails:
+#    WeaponType: <projectiles/energy>
+#    Trail: <trail>,<trail>,<etc.>
+#    Length: <amount>
+#    ParticleColor: <amount>-<amount>-<amount>
+#    Speed: <amount>
+#    Amount: <amount>
+#    ExtraParticlesAhead: <amount>
+#    ExtraParticlesInterval: <amount>
+#    Advanced:
+#        TrailType: <STRAIGHT/CIRCLE>
+#        Radius: <amount>
+#        Points: <amount>
+#        GoThrough: <none/walls/players/all>
+# ========================
+#Important Notes：
+#  1.Most options can be left blank—I've set default values. In other words, you can delete most lines and it will still run, just like the YAML files in CS plugins.
+#  2.When bullets are arrows and [AutoAimNearest] is [true], shooting at the shadow near a mob’s feet when too close may cause double damage. I tried to fix this but found that the foot collision area varies for each mob, so the behavior is still unstable. Sometimes aiming at the feet won't register, while other times it deals double damage. That said, triggering this bug is nearly impossible in practice, but I’m mentioning it here just in case.
+#  3.All coefficients (especially the xxxCoef parameters) have an error margin of about ±0.0000000000000001, i.e., on the order of 10^-16. Some values even reach an astonishing error of 10^-15. What? You ask why I'm writing this? And, why am I writing in English as a Chinese? Damn it. When I'm writing in Chinese here, it keeps reporting errors endlessly! I'm using UTF-8! I tried Unicode too! But it just won't run! FUCK YOU CSE_GUNS.YML ! FUCK YOU!!! I'M FUCKING MAD!!! FUCKIN' CSE! FUCKIN' FLOAT, GO EAT SHIT!
+#  4.FUCKIN' CRACKSHOT，GO EAT SHIT! WHY SHAMPAGGON OFFER SUCH AN API THAT IS NO DIFFERENT FROM A LUMP OF SHIT? IT SUCKS!!!! FUCK!!!!!!!!!!!! ONE DAY I WILL FIND HIM , KIDNAP HIM, AND FORCE HIM TO LICK MY ASSHOLE, SO THAT HE'LL TASTE REAL SHIT JUST LIKE ME.
+#  5.FUCKIN' PAPERSPIGOT，GO EAT SHIT! NOW I UNDERSTAND WHY NO ONE USE PAPER ANYMORE NOW IN HIGHER VERSIONS. IT JUST LIKE MOUNT EVEREST MADE OF PURE SHIT. THOSE AMERICAN BASTARDS SIMPLY HAVE NO IDEA OF OPENNESS AND MAINTAINABILITY.
+#  6.FUCKIN' MINECRAFT，GO EAT SHIT! GOD DAMN IT, HOW DO YOU SON OF BITCHES IN MOJANG MANAGE TO MAKE SUCH A POOR-PORFORMING GAME??? I DONWANT TO SEE THIS PILE OF BULLSHIT STINKING IN MY VISUAL STUDIOS ANYMORE!
+#  7.FUCKIN' WINDOWS，GO EAT SHIT! MICROSOFT YOU BUNCH OF IDIOT. HAVE YOU ALL BEEN SUCKING INDIAN DICKS ALL DAY LONG IN WORKTIME? HOW COULD YOU MAKE SUCH A MOTHERFUCKING STUPID UPDATE THAT WOULD MAKE MY RDP FREEZE AGAIN AGAIN AND AGAIN?!! FUCK!!! FUCK ALL OF YOU!!!
+# ========================
+#All of this represents my frustrations when writing the code. Just ignore it.
+#I originally intended to delete these, but after hesitation, I decided to keep them as a memento.
+#Hmm, after finishing accessories.yml, I've lost my energy. Are the examples comprehensive enough?
+#Anyway, even if I write it, no one will use this plugin...
+#If someone does use it, just raise an issue on the issues page and let me add the introduction.
