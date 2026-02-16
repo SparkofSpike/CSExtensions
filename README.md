@@ -1,5 +1,5 @@
 # CSExtensions
-### *For Paper 1.8.8, another "CrackshotPlus"*
+### *Crackshot's addon for Paper 1.8.8, another "CrackshotPlus"*
 
 [![Java](https://img.shields.io/badge/Java-8%2B-orange)](https://java.com)
 [![CrackShot](https://img.shields.io/badge/CrackShot-Required-red)](https://www.spigotmc.org/resources/48399)
