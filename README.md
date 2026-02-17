@@ -47,7 +47,7 @@ This is where I went completely off the rails. Accessories are like CrackShot at
 
 **Health Adjustment** - Increase max health. Or decrease it. Make your players tankier or make them suffer. Positive numbers add hearts, negative numbers remove them. There's a safety mechanism to prevent health from going below zero because even I have limits.
 
-**Weight System** - Weight affects movement speed. Weight of 1 slows players down by 100% - they basically can't move. Weight of -1 speeds them up by 100% - they become Sonic the Hedgehog. Why can't you configure it more precisely with custom values? Because I got lazy writing that part. Deal with it.
+**Weight System** - Weight affects movement speed. Weight of 1 slows players down by 100% - they basically can't move. Weight of -1 speeds them up by 100% - they become Sonic the Hedgehog. Or 0.5, or -0.2, or -9999, or something else you want. Why can't you configure it more precisely with custom values like 100kg/50g/2t? Because I got lazy writing that part. Deal with it.
 
 **MythicMobs Integration** - Yes, accessories can trigger MythicMobs skills too. Because why should guns have all the fun? Wear a cursed ring that damages you over time, or a holy amulet that heals you when you kill someone. The possibilities are endless and barely tested.
 
