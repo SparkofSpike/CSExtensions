@@ -5,13 +5,13 @@
 [![CrackShot](https://img.shields.io/badge/CrackShot-Required-red)](https://www.spigotmc.org/resources/48399)
 [![MythicMobs](https://img.shields.io/badge/MythicMobs-Optional-purple)](https://mythicmobs.net)
 
-Remember back in 2015 when you were running a 1.8.8 server and desperately wanted those fancy CrackShotPlus features everyone was talking about? Then serveral years later, you actually tried CSP and realized it's held together by duct tape, prayers, and the tears of innocent developers?
+Remember back in 2015, you were looking for an interesting server, and by chance you discovered one that used Crackshot? Wow! Amazing! It's cool! Right? Later, you came across a more awesome Crackshot addon - CrackshotPlus, which really surprised you. Later, you yourself wanted to set up your own server and had a strong desire to have those cool CrackShotPlus features that everyone was talking about... However, a few years later, you actually tried CSP and realized that it was actually not as powerful as you had imagined...Disappointed!
 
 To be honest, Crackshot is a great plugin. I admire its creator. However, considering the current situation, its functions are really not satisfactory. CrackshotPlus is an extremely outstanding addon. Unfortunately, it was also limited by the times. If you want to experience more powerful functions, you have to give up the old version 1.8.8. But I don't want to do that!
 
-Yeah. That's why this exists.
+The character Vendetta from Overwatch is quite handsome, right? Do you want to recreate her moves in Minecraft? The "Waterfowl Dance"(「水鳥乱舞」) performed by Malenia in Elden Ring is really cool, don't you think? Do you want to have a similar performance? Or do you want to try the same design as in Valorant? You find that all these designs can only be realized in the higher versions. Your companions do not want to update their clients to the new version. They simply love versions below 1.9 - texture, atmosphere, feel, or something else...Yeah. That's why this exists.
 
-CSExtensions is my mental breakdown turned into a plugin. It adds actual useful features to CrackShot without making you want to throw your computer out the window. Well, maybe just a little.
+CSExtensions is the result of my mental breakdown and unrestrained imagination. Therefore, it might seem a bit crazy from a code perspective. This is perfectly normal because I'm just an amateur coder. If you see some algorithm that is so inefficient and confusing, if you get so angry that you want to throw your computer out the window, if you want to jump out of computer screen and give me two loud slaps in the face... then that's exactly what it should be!
 
 ---
 
@@ -19,9 +19,9 @@ CSExtensions is my mental breakdown turned into a plugin. It adds actual useful 
 
 The plugin splits into two parts because I'm not a complete madman (debatable):
 
-### 🔫 **Part 1: cse_guns.yml - Making CrackShot Less Shitty**
+### 🔫 **Part 1: cse_guns.yml - Making CrackShot Great Again**
 
-This is where we fix what Shampaggon broke. Every weapon in your CrackShot config can now have:
+Inspired by CrackshotPlus, I wrote this. As an alternative to CSP, it fixes its bugs and enhances some features. Every weapon in your CrackShot config can now have:
 
 **Trails System** - Remember when you wanted cool particle effects following your bullets? Now you can have them. Flames, smoke, critical hits, colored particles, circle trails, straight trails, trails that go through walls... I went a little overboard. Each trail is fully customizable with multiple effects per weapon, adjustable length and density, color support, and even advanced circular patterns with radius control. You can even decide whether they pass through walls, players, or nothing at all.
 
@@ -32,6 +32,7 @@ This is where we fix what Shampaggon broke. Every weapon in your CrackShot confi
 **Bar Message Groups** - Different reload bars for different weapon groups. Snipers get a fancy long bar, pistols get a quick simple one. If you have ever used CrackshotPlus, you will easily understand what I'm saying.
 
 **MythicMobs Integration** - Trigger MM skills when you shoot, reload, get a headshot, land a critical hit, attack, take damage, hit a block, or even on a timer. Use any targeter you want - the shooter, the victim, the hit location, or trigger the skill on yourself. Yes, it all works. No, I didn't test every single combination but hey, that's what production servers are for. Don't ask why this needed to exist. I had a reason at 3 AM and it made perfect sense at the time.
+
 ---
 
 ### 💍 **Part 2: accessories.yml - The Thing I Actually Had Fun Writing**
@@ -72,7 +73,7 @@ This is where I went completely off the rails. Accessories are like CrackShot at
 | `/cse trails <weapon>` | csextensions.trails | Shows trail config for a specific weapon |
 | `/cse debug` | csextensions.debug | Toggles debug mode (prints way too much in console) |
 | `/cse particles` | csextensions.debug | Lists all available particles in console |
-| `/cse test` | csextensions.debug | Only used by me.Maybe make your server explode |
+| `/cse test` | csextensions.debug | Only used by me. Maybe make your server explode |
 
 ---
 
@@ -99,6 +100,8 @@ The plugin generates three main files on first run:
 
 **config.yml** - The boring one. Enable or disable modules, toggle debug mode, set global defaults. You'll look at it once and never touch it again.
 
+**barmessage.yml** - To configure the prompt bar for loading bullets, serving no other purpose besides this.
+
 **cse_guns.yml** - This is where the magic happens. Each weapon from your CrackShot config gets its own section here. Add trails, projectile effects, health adjustments, and MythicMobs triggers. The file comes with commented examples showing every single option. I was nice for approximately 15 minutes while writing those comments.
 
 **accessories.yml** - The fun one. Define custom accessories with names, materials, lore, and effects. Set up damage multipliers with complex conditions, conflict groups to prevent overpowered combinations, health adjustments, weight values, and even MythicMobs triggers. Go wild.
@@ -107,8 +110,8 @@ The plugin generates three main files on first run:
 
 ## ❓ **FAQ (Actually no one asked)**
 
-**Q: Will this work on 1.16+?**  
-A: Probably not. I wrote this for 1.8.8 and never tested anything else. If it works on newer versions, that's a happy accident. If it doesn't, that's expected behavior.
+**Q: Will this work on 1.12+/1.16+/1.20+?**  
+A: Perhaps not. Or if it can, then it would be considered a miracle. I wrote this for 1.8.8 and never tested anything else. If it works on newer versions, that's a happy accident. If it doesn't, that's expected behavior.
 
 **Q: Can you add [feature]?**  
 A: No. Or maybe? I don't know. Lol.
@@ -123,7 +126,7 @@ A: Insomnia, wine, coffein, and a burning hatred for poorly maintained alternati
 A: Define production. Define ready. Define is. Some servers have been running it for months without issues. Some servers caught fire immediately. Results may vary.
 
 **Q: The Return feature is broken, why keep it?**  
-A: As a monument to my failures and a warning to others who would tread that path.
+A: As a monument to my failures and a warning to others who would tread that path. Well, actually: My math is so bad that I have no idea how to calculate the trajectory of the return, so I had to give it up. I really liked this design.
 
 **Q: Do you accept pull requests?**  
 A: Sure, but I probably won't merge them. Feel free to fork your own version.
@@ -132,7 +135,7 @@ A: Sure, but I probably won't merge them. Feel free to fork your own version.
 
 ## 📜 **License**
 
-Do whatever you want with it. Fork it, modify it, sell it, burn it, print it out and use it as wallpaper or toiletpaper. I genuinely don't care. If you make millions off this plugin, please buy me a wine. If you break your server, buy yourself a wine. We all need wine to live.
+Do whatever you want with it. Fork it, modify it, sell it, burn it, print it out and use it as wallpaper or toiletpaper. I genuinely don't care. If you make millions off this plugin, please buy me a wine. If you break your server, buy yourself a wine. We all need wine to live. Or maybe cigarettes would be fine too? It doesn't matter.
 
 ---
 
