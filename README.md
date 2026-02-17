@@ -96,7 +96,7 @@ This is where I went completely off the rails. Accessories are like CrackShot at
 
 ## 📁 **Configuration Overview**
 
-The plugin generates three main files on first run:
+The plugin generates four main files on first run:
 
 **config.yml** - The boring one. Enable or disable modules, toggle debug mode, set global defaults. You'll look at it once and never touch it again.
 
