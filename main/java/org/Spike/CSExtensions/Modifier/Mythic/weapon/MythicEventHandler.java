@@ -1,0 +1,366 @@
+package org.Spike.CSExtensions.Modifier.Mythic.core;
+
+import com.shampaggon.crackshot.CSUtility;
+import com.shampaggon.crackshot.events.*;
+import org.Spike.CSExtensions.CSExtensions;
+import org.Spike.CSExtensions.Modifier.Mythic.MythicDropListener;
+import org.Spike.CSExtensions.Modifier.Mythic.weapon.MythicConfigManager;
+import org.Spike.CSExtensions.Modifier.Services.HitLocationTarget;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.block.Block;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
+
+import java.util.*;
+
+public class MythicEventHandler implements Listener {
+    private final CSExtensions plugin;
+    private final MythicConfigManager configManager;
+    private final CSUtility csUtility;
+    private final MythicDropListener dropListener;
+    private final MythicSkillExecutor executor;
+
+    private final Map<UUID, String> activeWeapons = new HashMap<>();
+    private final Map<UUID, Map<String, Integer>> playerWeaponTimers = new HashMap<>();
+    private final Map<Integer, String> taskIdToWeaponMap = new HashMap<>();
+
+    public MythicEventHandler(CSExtensions plugin, MythicConfigManager configManager, CSUtility csUtility) {
+        this.plugin = plugin;
+        this.configManager = configManager;
+        this.csUtility = csUtility;
+        this.executor = new MythicSkillExecutor(plugin);
+
+        this.dropListener = new MythicDropListener(plugin);
+        plugin.getServer().getPluginManager().registerEvents(dropListener, plugin);
+
+        if (Bukkit.getPluginManager().isPluginEnabled("MythicMobs")) {
+            plugin.getLogger().info("CrackShot掉落监听器已注册");
+        } else {
+            plugin.getLogger().warning("MythicMobs未启用，CrackShot掉落支持已禁用");
+        }
+
+        Bukkit.getPluginManager().registerEvents(this, plugin);
+        plugin.getLogger().info("MythicEventHandler构造函数已加载");
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onWeaponShoot(WeaponShootEvent event) {
+        String weaponTitle = event.getWeaponTitle();
+
+        if (!configManager.hasMythicConfig(weaponTitle) ||
+                !configManager.hasTriggerType(weaponTitle, MythicTrigger.SHOOT)) {
+            return;
+        }
+
+        handleTrigger(event.getPlayer(), weaponTitle, MythicTrigger.SHOOT, null, null, null);
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onWeaponDamage(WeaponDamageEntityEvent event) {
+        String weaponTitle = event.getWeaponTitle();
+
+        if (!configManager.hasMythicConfig(weaponTitle)) {
+            return;
+        }
+
+        boolean hasHitTrigger = configManager.hasTriggerType(weaponTitle, MythicTrigger.HIT);
+        boolean hasCritTrigger = configManager.hasTriggerType(weaponTitle, MythicTrigger.CRIT);
+        boolean hasHeadshotTrigger = configManager.hasTriggerType(weaponTitle, MythicTrigger.HEADSHOT);
+        boolean hasKillTrigger = configManager.hasTriggerType(weaponTitle, MythicTrigger.KILL);
+
+        if (!hasHitTrigger && !hasCritTrigger && !hasHeadshotTrigger && !hasKillTrigger) {
+            return;
+        }
+
+        Player player = event.getPlayer();
+        if (player == null || !(event.getVictim() instanceof LivingEntity)) {
+            return;
+        }
+
+        LivingEntity victim = (LivingEntity) event.getVictim();
+        Set<String> weaponTags = getWeaponTags(weaponTitle);
+
+        if (hasHitTrigger) {
+            handleTrigger(player, weaponTitle, MythicTrigger.HIT, victim, player, weaponTags);
+        }
+
+        if (event.isCritical() && hasCritTrigger) {
+            handleTrigger(player, weaponTitle, MythicTrigger.CRIT, victim, player, weaponTags);
+        }
+
+        if (event.isHeadshot() && hasHeadshotTrigger) {
+            handleTrigger(player, weaponTitle, MythicTrigger.HEADSHOT, victim, player, weaponTags);
+        }
+
+        if (hasKillTrigger && victim.getHealth() - event.getDamage() <= 0) {
+            handleTrigger(player, weaponTitle, MythicTrigger.KILL, victim, player, weaponTags);
+        }
+
+        handleHitLocationTrigger(player, weaponTitle, victim, weaponTags);
+    }
+
+    private void handleHitLocationTrigger(Player player, String weaponTitle, LivingEntity victim, Set<String> weaponTags) {
+        List<MythicEffect> effects = configManager.getEffects(weaponTitle, MythicTrigger.HIT);
+        if (effects.isEmpty()) return;
+
+        boolean hasHitLocationSelector = false;
+        for (MythicEffect effect : effects) {
+            if ("@hitlocation".equals(effect.getTargetSelector())) {
+                hasHitLocationSelector = true;
+                break;
+            }
+        }
+
+        if (!hasHitLocationSelector) return;
+
+        HitLocationTarget locationTarget = new HitLocationTarget(victim.getLocation());
+
+        for (MythicEffect effect : effects) {
+            if (!"@hitlocation".equals(effect.getTargetSelector())) continue;
+
+            if (!effect.shouldTrigger(Math.random())) continue;
+            if (!effect.checkConditions(player, victim, weaponTags)) continue;
+
+            executor.executeSkill(player, effect.getSkillName(), effect.getTargetSelector(),
+                    locationTarget.getLocation(), victim, player);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onWeaponHitBlock(WeaponHitBlockEvent event) {
+        Player player = event.getPlayer();
+        String weaponTitle = event.getWeaponTitle();
+
+        if (player == null) return;
+
+        Block hitBlock = event.getBlock();
+        if (hitBlock == null) return;
+
+        Location hitLocation = hitBlock.getLocation().add(0.5, 0.5, 0.5);
+        HitLocationTarget locationTarget = new HitLocationTarget(hitLocation);
+        Set<String> weaponTags = getWeaponTags(weaponTitle);
+
+        handleTrigger(player, weaponTitle, MythicTrigger.HITBLOCK, null, player, weaponTags);
+
+        handleHitLocationFromBlock(player, weaponTitle, locationTarget, weaponTags);
+
+        if (plugin.getConfig().getBoolean("debug", false)) {
+            plugin.getLogger().info("[Mythic] 方块命中触发: " + weaponTitle +
+                    " 位置: " + hitLocation);
+        }
+    }
+
+    private void handleHitLocationFromBlock(Player player, String weaponTitle, HitLocationTarget locationTarget, Set<String> weaponTags) {
+        List<MythicEffect> effects = configManager.getEffects(weaponTitle, MythicTrigger.HIT);
+        if (effects.isEmpty()) return;
+
+        for (MythicEffect effect : effects) {
+            if (!"@hitlocation".equals(effect.getTargetSelector())) continue;
+
+            if (!effect.shouldTrigger(Math.random())) continue;
+            if (!effect.checkConditions(player, null, weaponTags)) continue;
+
+            executor.executeSkill(player, effect.getSkillName(), effect.getTargetSelector(),
+                    locationTarget.getLocation(), null, player);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onWeaponReloadComplete(WeaponReloadCompleteEvent event) {
+        String weaponTitle = event.getWeaponTitle();
+
+        if (!configManager.hasMythicConfig(weaponTitle) ||
+                !configManager.hasTriggerType(weaponTitle, MythicTrigger.RELOAD)) {
+            return;
+        }
+
+        handleTrigger(event.getPlayer(), weaponTitle, MythicTrigger.RELOAD, null, null, null);
+    }
+
+    @EventHandler
+    public void onPlayerItemHeld(PlayerItemHeldEvent event) {
+        Player player = event.getPlayer();
+        UUID playerId = player.getUniqueId();
+        ItemStack item = player.getInventory().getItem(event.getNewSlot());
+
+        stopPlayerTimers(playerId);
+
+        if (item != null) {
+            String weaponTitle = csUtility.getWeaponTitle(item);
+
+            if (weaponTitle != null) {
+                activeWeapons.put(playerId, weaponTitle);
+                startWeaponTimers(player, weaponTitle);
+            } else {
+                activeWeapons.remove(playerId);
+            }
+        } else {
+            activeWeapons.remove(playerId);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        UUID playerId = event.getPlayer().getUniqueId();
+        stopPlayerTimers(playerId);
+        activeWeapons.remove(playerId);
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        UUID playerId = event.getEntity().getUniqueId();
+        stopPlayerTimers(playerId);
+        activeWeapons.remove(playerId);
+    }
+
+    private void startWeaponTimers(Player player, String weaponTitle) {
+        if (!configManager.hasMythicConfig(weaponTitle) ||
+                !configManager.hasTriggerType(weaponTitle, MythicTrigger.TIMER)) {
+            return;
+        }
+
+        List<MythicEffect> timerEffects = configManager.getEffects(weaponTitle, MythicTrigger.TIMER);
+        if (timerEffects.isEmpty()) return;
+
+        UUID playerId = player.getUniqueId();
+        Map<String, Integer> timers = playerWeaponTimers.computeIfAbsent(playerId, k -> new HashMap<>());
+
+        for (MythicEffect effect : timerEffects) {
+            int timerTicks = effect.getTimerTicks();
+            if (timerTicks <= 0) continue;
+
+            final String finalWeaponTitle = weaponTitle;
+            final UUID finalPlayerId = playerId;
+
+            int taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+                Player currentPlayer = Bukkit.getPlayer(finalPlayerId);
+                if (currentPlayer == null || !currentPlayer.isOnline()) {
+                    stopWeaponTimer(finalPlayerId, finalWeaponTitle);
+                    return;
+                }
+
+                ItemStack currentItem = currentPlayer.getItemInHand();
+                String currentWeapon = csUtility.getWeaponTitle(currentItem);
+
+                if (!finalWeaponTitle.equals(currentWeapon)) {
+                    stopWeaponTimer(finalPlayerId, finalWeaponTitle);
+                    return;
+                }
+
+                if (!effect.shouldTrigger(Math.random())) return;
+                if (!effect.checkHealthCondition(currentPlayer)) return;
+
+                Set<String> weaponTags = getWeaponTags(finalWeaponTitle);
+                executor.executeSkill(currentPlayer, effect.getSkillName(), effect.getTargetSelector(),
+                        currentPlayer.getLocation(), null, currentPlayer);
+
+            }, timerTicks, timerTicks);
+
+            timers.put(weaponTitle, taskId);
+            taskIdToWeaponMap.put(taskId, weaponTitle + ":" + playerId);
+
+            if (plugin.getConfig().getBoolean("debug", false)) {
+                plugin.getLogger().info("[Mythic] 启动定时器: 玩家=" + player.getName() +
+                        ", 武器=" + weaponTitle + ", 间隔=" + timerTicks + "tick");
+            }
+        }
+    }
+
+    private void stopPlayerTimers(UUID playerId) {
+        Map<String, Integer> timers = playerWeaponTimers.remove(playerId);
+        if (timers == null) return;
+
+        for (int taskId : timers.values()) {
+            Bukkit.getScheduler().cancelTask(taskId);
+            taskIdToWeaponMap.remove(taskId);
+        }
+
+        if (plugin.getConfig().getBoolean("debug", false)) {
+            plugin.getLogger().info("[Mythic] 停止玩家所有定时器: " + playerId);
+        }
+    }
+
+    private void handleTrigger(Player player, String weaponTitle, MythicTrigger trigger,
+                               LivingEntity target, LivingEntity triggerEntity, Set<String> weaponTags) {
+        List<MythicEffect> effects = configManager.getEffects(weaponTitle, trigger);
+        if (effects.isEmpty()) return;
+
+        if (plugin.getConfig().getBoolean("debug", false)) {
+            plugin.getLogger().info("[Mythic调试] 触发处理: " + weaponTitle +
+                    " 触发类型: " + trigger +
+                    " 效果数量: " + effects.size());
+        }
+
+        for (MythicEffect effect : effects) {
+            if (!effect.shouldTrigger(Math.random())) {
+                if (plugin.getConfig().getBoolean("debug", false)) {
+                    plugin.getLogger().info("[Mythic调试] 几率检查失败: " + effect.getChance());
+                }
+                continue;
+            }
+
+            if (!effect.checkConditions(player, target, weaponTags)) {
+                if (plugin.getConfig().getBoolean("debug", false)) {
+                    plugin.getLogger().info("[Mythic调试] 条件检查失败");
+                }
+                continue;
+            }
+
+            Location location = target != null ? target.getLocation() : player.getLocation();
+            executor.executeSkill(player, effect.getSkillName(), effect.getTargetSelector(),
+                    location, target, triggerEntity);
+        }
+    }
+
+    private void stopWeaponTimer(UUID playerId, String weaponTitle) {
+        Map<String, Integer> timers = playerWeaponTimers.get(playerId);
+        if (timers == null) return;
+
+        Integer taskId = timers.remove(weaponTitle);
+        if (taskId != null) {
+            Bukkit.getScheduler().cancelTask(taskId);
+            taskIdToWeaponMap.remove(taskId);
+
+            if (plugin.getConfig().getBoolean("debug", false)) {
+                plugin.getLogger().info("[Mythic] 停止武器定时器: 玩家=" + playerId + ", 武器=" + weaponTitle);
+            }
+        }
+    }
+
+    private Set<String> getWeaponTags(String weaponId) {
+        if (plugin.getSpikeElementsManager() != null) {
+            return plugin.getSpikeElementsManager().getTagReader().getWeaponTags(weaponId);
+        }
+        return Collections.emptySet();
+    }
+
+    public void reload() {
+        configManager.reload();
+        activeWeapons.clear();
+        playerWeaponTimers.clear();
+        taskIdToWeaponMap.clear();
+    }
+
+    public void cleanup() {
+        for (Map<String, Integer> timers : playerWeaponTimers.values()) {
+            for (int taskId : timers.values()) {
+                Bukkit.getScheduler().cancelTask(taskId);
+            }
+        }
+        playerWeaponTimers.clear();
+        taskIdToWeaponMap.clear();
+
+        if (dropListener != null) {
+            HandlerList.unregisterAll(dropListener);
+        }
+    }
+}

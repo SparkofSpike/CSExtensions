@@ -1,0 +1,50 @@
+name: CSExtensions
+version: 1.0.0
+main: org.Spike.CSExtensions.CSExtensions
+api-version: 1.8
+depend: [CrackShot]
+softdepend: [MythicMobs]
+authors: [Spike]
+description: CrackShot扩展插件
+
+commands:
+  cse:
+    description: CSExtensions主命令
+    usage: /<command> [reload|give|list|debug|trails|weapons]
+    aliases: [csextensions]
+
+permissions:
+  csextensions.*:
+    description: 所有CSExtensions权限
+    children:
+      csextensions.reload: true
+      csextensions.give: true
+      csextensions.list: true
+      csextensions.debug: true
+      csextensions.trails: true
+      csextensions.weapons: true
+    default: op
+
+  csextensions.reload:
+    description: 允许重载插件配置
+    default: op
+
+  csextensions.give:
+    description: 允许给予饰品
+    default: op
+
+  csextensions.list:
+    description: 允许查看饰品列表
+    default: op
+
+  csextensions.debug:
+    description: 允许切换调试模式
+    default: op
+
+  csextensions.trails:
+    description: 允许查看Trails配置
+    default: op
+
+  csextensions.weapons:
+    description: 允许查看武器列表
+    default: op
