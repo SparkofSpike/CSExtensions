@@ -93,10 +93,13 @@ public class ProjectileData {
         ProjectilesConfig.ReturnConfig returnConfig = config.getReturnConfig();
 
         Vector toShooter = shooter.getLocation().toVector()
-                .subtract(projectile.getLocation().toVector())
-                .normalize();
+                .subtract(projectile.getLocation().toVector());
 
-        this.returnAcceleration = toShooter.multiply(returnConfig.getAcceleration());
+        if (toShooter.lengthSquared() > 0) {
+            this.returnAcceleration = toShooter.normalize().multiply(returnConfig.getAcceleration());
+        } else {
+            this.returnAcceleration = new Vector(0, 0, 0);
+        }
     }
 
     public void updateReturnAcceleration(Projectile projectile, Player shooter) {
@@ -105,10 +108,13 @@ public class ProjectileData {
         }
 
         Vector toShooter = shooter.getLocation().toVector()
-                .subtract(projectile.getLocation().toVector())
-                .normalize();
+                .subtract(projectile.getLocation().toVector());
 
-        this.returnAcceleration = toShooter.multiply(config.getReturnConfig().getAcceleration());
+        if (toShooter.lengthSquared() > 0) {
+            this.returnAcceleration = toShooter.normalize().multiply(config.getReturnConfig().getAcceleration());
+        } else {
+            this.returnAcceleration = new Vector(0, 0, 0);
+        }
         this.shooterLocation = shooter.getLocation().clone();
     }
 

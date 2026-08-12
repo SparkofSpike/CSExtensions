@@ -333,7 +333,7 @@ public class CSExtensions extends JavaPlugin implements Listener {
 
 
         Entity damager = event.getDamager();
-        if (damager instanceof Projectile) {
+        if (damager instanceof Projectile && projectilesController != null) {
             Projectile projectile = (Projectile) damager;
             ProjectileTracker tracker = this.projectilesController.getProjectileTracker();
             ProjectileData data = tracker.getProjectileData(projectile.getEntityId());
