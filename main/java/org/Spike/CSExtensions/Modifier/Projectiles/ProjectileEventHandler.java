@@ -352,7 +352,7 @@ public class ProjectileEventHandler implements Listener {
 
             double entityWidth = getEstimatedEntityWidth(hitEntity);
 
-            double offsetDistance = entityWidth + 3.5;
+            double offsetDistance = entityWidth + 1.5;
 
             Vector offset = direction.clone().multiply(offsetDistance);
             Location respawnLoc = projectileLoc.clone().add(offset);
