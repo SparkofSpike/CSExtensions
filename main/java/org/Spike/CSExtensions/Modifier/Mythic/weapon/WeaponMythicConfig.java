@@ -88,7 +88,12 @@ public class WeaponMythicConfig {
                 if (matcher.find()) {
                     String triggerName = matcher.group(1).toUpperCase();
                     if ("TIMER".equals(triggerName) && matcher.group(2) != null) {
-                        timerTicks = Integer.parseInt(matcher.group(2));
+                        try {
+                            timerTicks = Integer.parseInt(matcher.group(2));
+                        } catch (NumberFormatException e) {
+                            plugin.getLogger().warning("TIMER tick格式错误，跳过该触发器: " + part);
+                            continue;
+                        }
                         trigger = MythicTrigger.TIMER;
                     } else {
                         try {
