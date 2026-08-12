@@ -365,10 +365,17 @@ public class ProjectileEventHandler implements Listener {
             }
 
             Vector offset = direction.clone().multiply(offsetDistance);
-            // 基准用实体中心而非弹射物当前位置：SpikeShot 的射线检测会在子弹
+            // 基准用碰撞盒中心而非弹射物当前位置：SpikeShot 的射线检测会在子弹
             // 到达目标前就触发伤害事件，弹射物位置此时还在目标前方，
             // 用它作基准会让新弹射物生成在目标前方、立即撞回目标导致穿透断链。
-            Location respawnLoc = hitEntity.getLocation().clone().add(offset);
+            // getLocation() 返回脚部位置，需加上半高才是碰撞盒中心。
+            Location entityCenter = hitEntity.getLocation().clone();
+            if (dims != null) {
+                entityCenter.add(0, dims[1] / 2.0, 0);
+            } else {
+                entityCenter.add(0, getEstimatedEntityHeight(hitEntity) / 2.0, 0);
+            }
+            Location respawnLoc = entityCenter.add(offset);
 
             for (int i = 0; i < 3; i++) {
                 if (!respawnLoc.getBlock().getType().isSolid()) {
