@@ -32,7 +32,7 @@ public class MythicEventHandler implements Listener {
     private final MythicSkillExecutor executor;
 
     private final Map<UUID, String> activeWeapons = new HashMap<>();
-    private final Map<UUID, Map<String, Integer>> playerWeaponTimers = new HashMap<>();
+    private final Map<UUID, Map<String, List<Integer>>> playerWeaponTimers = new HashMap<>();
     private final Map<Integer, String> taskIdToWeaponMap = new HashMap<>();
 
     public MythicEventHandler(CSExtensions plugin, WeaponMythicConfig configManager, CSUtility csUtility) {
@@ -265,7 +265,7 @@ public class MythicEventHandler implements Listener {
         if (timerEffects.isEmpty()) return;
 
         UUID playerId = player.getUniqueId();
-        Map<String, Integer> timers = playerWeaponTimers.computeIfAbsent(playerId, k -> new HashMap<>());
+        Map<String, List<Integer>> timers = playerWeaponTimers.computeIfAbsent(playerId, k -> new HashMap<>());
 
         for (MythicEffect effect : timerEffects) {
             int timerTicks = effect.getTimerTicks();
@@ -298,7 +298,7 @@ public class MythicEventHandler implements Listener {
 
             }, timerTicks, timerTicks);
 
-            timers.put(weaponTitle, taskId);
+            timers.computeIfAbsent(weaponTitle, k -> new ArrayList<>()).add(taskId);
             taskIdToWeaponMap.put(taskId, weaponTitle + ":" + playerId);
 
             if (plugin.getConfig().getBoolean("debug", false)) {
@@ -309,12 +309,14 @@ public class MythicEventHandler implements Listener {
     }
 
     private void stopPlayerTimers(UUID playerId) {
-        Map<String, Integer> timers = playerWeaponTimers.remove(playerId);
+        Map<String, List<Integer>> timers = playerWeaponTimers.remove(playerId);
         if (timers == null) return;
 
-        for (int taskId : timers.values()) {
-            Bukkit.getScheduler().cancelTask(taskId);
-            taskIdToWeaponMap.remove(taskId);
+        for (List<Integer> taskIds : timers.values()) {
+            for (int taskId : taskIds) {
+                Bukkit.getScheduler().cancelTask(taskId);
+                taskIdToWeaponMap.remove(taskId);
+            }
         }
 
         if (plugin.getConfig().getBoolean("debug", false)) {
@@ -323,13 +325,15 @@ public class MythicEventHandler implements Listener {
     }
 
     private void stopWeaponTimer(UUID playerId, String weaponTitle) {
-        Map<String, Integer> timers = playerWeaponTimers.get(playerId);
+        Map<String, List<Integer>> timers = playerWeaponTimers.get(playerId);
         if (timers == null) return;
 
-        Integer taskId = timers.remove(weaponTitle);
-        if (taskId != null) {
-            Bukkit.getScheduler().cancelTask(taskId);
-            taskIdToWeaponMap.remove(taskId);
+        List<Integer> taskIds = timers.remove(weaponTitle);
+        if (taskIds != null) {
+            for (int taskId : taskIds) {
+                Bukkit.getScheduler().cancelTask(taskId);
+                taskIdToWeaponMap.remove(taskId);
+            }
 
             if (plugin.getConfig().getBoolean("debug", false)) {
                 plugin.getLogger().info("[Mythic] 停止武器定时器: 玩家=" + playerId + ", 武器=" + weaponTitle);
@@ -344,21 +348,26 @@ public class MythicEventHandler implements Listener {
         return Collections.emptySet();
     }
 
-    public void reload() {
-        configManager.reload();
-        activeWeapons.clear();
-        playerWeaponTimers.clear();
-        taskIdToWeaponMap.clear();
-    }
-
-    public void cleanup() {
-        for (Map<String, Integer> timers : playerWeaponTimers.values()) {
-            for (int taskId : timers.values()) {
-                Bukkit.getScheduler().cancelTask(taskId);
+    private void stopAllTimers() {
+        for (Map<String, List<Integer>> timers : playerWeaponTimers.values()) {
+            for (List<Integer> taskIds : timers.values()) {
+                for (int taskId : taskIds) {
+                    Bukkit.getScheduler().cancelTask(taskId);
+                }
             }
         }
         playerWeaponTimers.clear();
         taskIdToWeaponMap.clear();
+    }
+
+    public void reload() {
+        configManager.reload();
+        stopAllTimers();
+        activeWeapons.clear();
+    }
+
+    public void cleanup() {
+        stopAllTimers();
 
         if (dropListener != null) {
             HandlerList.unregisterAll(dropListener);
