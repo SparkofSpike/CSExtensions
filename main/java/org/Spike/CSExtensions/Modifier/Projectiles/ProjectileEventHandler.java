@@ -346,7 +346,6 @@ public class ProjectileEventHandler implements Listener {
 
     private Location calculatePenetrateRespawnLocation(Projectile projectile, Entity hitEntity, ProjectileData data) {
         try {
-            Location projectileLoc = projectile.getLocation();
             Vector direction = projectile.getVelocity().normalize();
             if (direction.lengthSquared() < 0.001) {
                 direction = data.getLastVelocity().normalize();
@@ -366,7 +365,10 @@ public class ProjectileEventHandler implements Listener {
             }
 
             Vector offset = direction.clone().multiply(offsetDistance);
-            Location respawnLoc = projectileLoc.clone().add(offset);
+            // 基准用实体中心而非弹射物当前位置：SpikeShot 的射线检测会在子弹
+            // 到达目标前就触发伤害事件，弹射物位置此时还在目标前方，
+            // 用它作基准会让新弹射物生成在目标前方、立即撞回目标导致穿透断链。
+            Location respawnLoc = hitEntity.getLocation().clone().add(offset);
 
             for (int i = 0; i < 3; i++) {
                 if (!respawnLoc.getBlock().getType().isSolid()) {
