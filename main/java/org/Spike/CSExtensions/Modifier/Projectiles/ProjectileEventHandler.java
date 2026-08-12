@@ -264,7 +264,9 @@ public class ProjectileEventHandler implements Listener {
                 data.addTrackedTarget((LivingEntity) hitEntity);
             }
 
-            Location respawnLocation = calculatePenetrateRespawnLocation(originalProjectile, hitEntity);
+            Vector fallbackVelocity = data.getLastVelocity();
+
+            Location respawnLocation = calculatePenetrateRespawnLocation(originalProjectile, hitEntity, data);
             if (respawnLocation == null) {
                 tracker.markForRemoval(originalProjectile.getEntityId());
                 return;
@@ -274,11 +276,17 @@ public class ProjectileEventHandler implements Listener {
             double minDistance = getEstimatedEntityWidth(hitEntity) + 0.5;
 
             if (distanceToEntity < minDistance) {
-                Vector direction = originalProjectile.getVelocity().normalize();
-                respawnLocation.add(direction.multiply(minDistance - distanceToEntity + 0.3));
+                Vector direction = originalProjectile.getVelocity();
+                if (direction.lengthSquared() < 0.001) {
+                    direction = fallbackVelocity;
+                }
+                respawnLocation.add(direction.normalize().multiply(minDistance - distanceToEntity + 0.3));
             }
 
             Vector originalVelocity = originalProjectile.getVelocity();
+            if (originalVelocity.lengthSquared() < 0.001) {
+                originalVelocity = fallbackVelocity;
+            }
             Vector newVelocity = originalVelocity.clone();
 
             double velocityMultiplier = data.getVelocityMultiplier();
@@ -296,6 +304,7 @@ public class ProjectileEventHandler implements Listener {
             spawnPenetrateProjectile(respawnLocation, newVelocity, shooter, weaponTitle, data, config);
 
             tracker.markForRemoval(originalProjectile.getEntityId());
+            originalProjectile.remove();
 
             if (plugin.getConfig().getBoolean("debug", false)) {
                 plugin.getLogger().info(String.format(
@@ -328,10 +337,13 @@ public class ProjectileEventHandler implements Listener {
         return entity.getEntityId() == ignoreEntityId;
     }
 
-    private Location calculatePenetrateRespawnLocation(Projectile projectile, Entity hitEntity) {
+    private Location calculatePenetrateRespawnLocation(Projectile projectile, Entity hitEntity, ProjectileData data) {
         try {
             Location projectileLoc = projectile.getLocation();
             Vector direction = projectile.getVelocity().normalize();
+            if (direction.lengthSquared() < 0.001) {
+                direction = data.getLastVelocity().normalize();
+            }
 
             double entityWidth = getEstimatedEntityWidth(hitEntity);
 
