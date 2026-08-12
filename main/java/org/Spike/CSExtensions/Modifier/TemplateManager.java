@@ -5,12 +5,15 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class TemplateManager {
     private final CSExtensions plugin;
     private final Map<String, ConfigurationSection> allSections = new HashMap<>();
     private final Map<String, ConfigurationSection> configCache = new HashMap<>();
+    private final Set<String> resolving = new HashSet<>();
 
     public TemplateManager(CSExtensions plugin) {
         this.plugin = plugin;
@@ -50,6 +53,7 @@ public class TemplateManager {
     public void clearCache() {
         int cacheSize = configCache.size();
         configCache.clear();
+        resolving.clear();
 
         if (plugin.getConfig().getBoolean("debug", false)) {
             plugin.getLogger().info("[TemplateManager] 清除缓存，原有缓存大小: " + cacheSize);
@@ -75,6 +79,11 @@ public class TemplateManager {
                 plugin.getLogger().warning("[TemplateManager] 配置不存在: " + weaponId);
             }
             return null;
+        }
+
+        if (!resolving.add(weaponId)) {
+            plugin.getLogger().warning("[TemplateManager] 检测到模板循环引用: " + weaponId + "，使用自身原始配置");
+            return allSections.get(weaponId);
         }
 
         ConfigurationSection result = null;

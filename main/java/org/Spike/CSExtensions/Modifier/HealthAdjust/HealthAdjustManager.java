@@ -8,8 +8,10 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class HealthAdjustManager {
     private final CSExtensions plugin;
@@ -63,6 +65,11 @@ public class HealthAdjustManager {
     }
 
     private void handleInheritance(ConfigurationSection weaponSection, HealthAdjustConfig healthConfig) {
+        handleInheritance(weaponSection, healthConfig, new HashSet<>());
+    }
+
+    private void handleInheritance(ConfigurationSection weaponSection, HealthAdjustConfig healthConfig,
+                                   Set<String> visited) {
         if (weaponSection.contains("Template")) {
             String templateId = weaponSection.getString("Template");
 
@@ -70,9 +77,14 @@ public class HealthAdjustManager {
                 return;
             }
 
+            if (!visited.add(templateId)) {
+                plugin.getLogger().warning("检测到HealthAdjust模板循环引用: " + templateId);
+                return;
+            }
+
             ConfigurationSection parentSection = config.getConfigurationSection(templateId);
             if (parentSection != null) {
-                handleInheritance(parentSection, healthConfig);
+                handleInheritance(parentSection, healthConfig, visited);
 
                 parseCurrentConfig(parentSection, healthConfig);
             }
