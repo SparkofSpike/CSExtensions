@@ -287,4 +287,8 @@ public class TrailEffectManager {
             trail.stop();
         }
     }
+
+    public boolean hasActiveTrail(UUID projectileId) {
+        return projectileTrails.containsKey(projectileId);
+    }
 }

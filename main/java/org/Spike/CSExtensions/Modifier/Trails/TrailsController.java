@@ -105,7 +105,8 @@ public class TrailsController implements Listener {
                                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     if (trailConfigManager.hasTrails(weaponTitle)) {
                         TrailConfig config = trailConfigManager.getTrailConfig(weaponTitle);
-                        if (config != null && config.isProjectileWeapon()) {
+                        if (config != null && config.isProjectileWeapon()
+                                && !trailEffectManager.hasActiveTrail(projectile.getUniqueId())) {
                             trailEffectManager.startProjectileTrail(projectile, weaponTitle, shooter);
                         }
                     }
