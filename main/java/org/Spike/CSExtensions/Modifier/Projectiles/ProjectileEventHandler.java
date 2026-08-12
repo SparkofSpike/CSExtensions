@@ -261,6 +261,18 @@ public class ProjectileEventHandler implements Listener {
 
             data.applyPenetrate();
 
+            if (hitEntity instanceof LivingEntity) {
+                data.addTrackedTarget((LivingEntity) hitEntity);
+            }
+
+            String immunityKey = "CSE_Penetrate_Immune_" + weaponTitle + "_" + data.getShooterId();
+            hitEntity.setMetadata(immunityKey, new FixedMetadataValue(plugin, true));
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (hitEntity.isValid()) {
+                    hitEntity.removeMetadata(immunityKey, plugin);
+                }
+            }, 20L);
+
             Location respawnLocation = calculatePenetrateRespawnLocation(originalProjectile, hitEntity);
             if (respawnLocation == null) {
                 tracker.markForRemoval(originalProjectile.getEntityId());
@@ -330,14 +342,12 @@ public class ProjectileEventHandler implements Listener {
             Location projectileLoc = projectile.getLocation();
             Vector direction = projectile.getVelocity().normalize();
 
-            Location entityLoc = hitEntity.getLocation();
-
             double entityWidth = getEstimatedEntityWidth(hitEntity);
 
-            double offsetDistance = entityWidth + 1.0;
+            double offsetDistance = entityWidth + 1.5;
 
             Vector offset = direction.clone().multiply(offsetDistance);
-            Location respawnLoc = entityLoc.clone().add(offset);
+            Location respawnLoc = projectileLoc.clone().add(offset);
 
             for (int i = 0; i < 3; i++) {
                 if (!respawnLoc.getBlock().getType().isSolid()) {
@@ -352,7 +362,7 @@ public class ProjectileEventHandler implements Listener {
             respawnLoc.setPitch((float) pitch);
 
             if (plugin.getConfig().getBoolean("debug", false)) {
-                double distance = respawnLoc.distance(entityLoc);
+                double distance = respawnLoc.distance(hitEntity.getLocation());
                 plugin.getLogger().info(String.format(
                         "穿透重生位置: 实体=%s, 大小=%.1f, 偏移=%.1f, 实际距离=%.1f",
                         hitEntity.getType().name(), entityWidth, offsetDistance, distance
