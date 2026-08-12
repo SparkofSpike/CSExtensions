@@ -390,7 +390,9 @@ public class ProjectileEventHandler implements Listener {
 
                 if (tmin > tmax) return null;  // 射线未穿过碰撞盒
 
-                double t = tmax + 0.5;
+                // 穿出点外 1.5 格：1.8 箭的碰撞检测是包围盒 grow(1.0)，
+                // 0.5 格间距仍会被目标捕获导致穿透链中断。
+                double t = tmax + 1.5;
                 respawnLoc = projectileLoc.clone().add(direction.clone().multiply(t));
             } else {
                 // 回退（NMS 不可用）：碰撞盒中心 + 方向偏移
