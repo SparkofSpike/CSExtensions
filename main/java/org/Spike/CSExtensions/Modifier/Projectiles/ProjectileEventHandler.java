@@ -9,8 +9,10 @@ import org.Spike.CSExtensions.Modifier.Services.RaycastUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import net.minecraft.server.v1_8_R3.AxisAlignedBB;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -350,10 +352,18 @@ public class ProjectileEventHandler implements Listener {
                 direction = data.getLastVelocity().normalize();
             }
 
-            double entityWidth = getEstimatedEntityWidth(hitEntity);
-            double entityHeight = getEstimatedEntityHeight(hitEntity);
-
-            double offsetDistance = Math.max(entityWidth, entityHeight) / 2.0 + 0.5;
+            double[] dims = getEntityBoxDimensions(hitEntity);
+            double offsetDistance;
+            if (dims != null) {
+                // 弹道方向上的实体半尺寸（支撑函数）：|dx|*半宽 + |dy|*半高 + |dz|*半深
+                double halfExtent = Math.abs(direction.getX()) * dims[0] / 2.0
+                        + Math.abs(direction.getY()) * dims[1] / 2.0
+                        + Math.abs(direction.getZ()) * dims[2] / 2.0;
+                offsetDistance = halfExtent + 0.5;
+            } else {
+                offsetDistance = Math.max(getEstimatedEntityWidth(hitEntity),
+                        getEstimatedEntityHeight(hitEntity)) / 2.0 + 0.5;
+            }
 
             Vector offset = direction.clone().multiply(offsetDistance);
             Location respawnLoc = projectileLoc.clone().add(offset);
@@ -373,8 +383,8 @@ public class ProjectileEventHandler implements Listener {
             if (plugin.getConfig().getBoolean("debug", false)) {
                 double distance = respawnLoc.distance(hitEntity.getLocation());
                 plugin.getLogger().info(String.format(
-                        "穿透重生位置: 实体=%s, 大小=%.1f, 偏移=%.1f, 实际距离=%.1f",
-                        hitEntity.getType().name(), entityWidth, offsetDistance, distance
+                        "穿透重生位置: 实体=%s, 偏移=%.1f, 实际距离=%.1f",
+                        hitEntity.getType().name(), offsetDistance, distance
                 ));
             }
 
@@ -382,6 +392,18 @@ public class ProjectileEventHandler implements Listener {
 
         } catch (Exception e) {
             plugin.getLogger().warning("计算穿透重生位置失败: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 通过 NMS 读取实体的实际碰撞盒尺寸 [宽, 高, 深]；失败时返回 null（调用方回退到查表近似）。
+     */
+    private double[] getEntityBoxDimensions(Entity entity) {
+        try {
+            AxisAlignedBB box = ((CraftEntity) entity).getHandle().getBoundingBox();
+            return new double[]{box.d - box.a, box.e - box.b, box.f - box.c};
+        } catch (Exception e) {
             return null;
         }
     }
