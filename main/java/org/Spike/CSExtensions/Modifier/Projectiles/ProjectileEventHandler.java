@@ -169,8 +169,9 @@ public class ProjectileEventHandler implements Listener {
 
             if (data.getTrackedTargets().contains(victim.getEntityId())) {
                 event.setCancelled(true);
+                projectile.remove();
                 if (plugin.getConfig().getBoolean("debug", false)) {
-                    plugin.getLogger().info("穿透链抛射物命中已穿透实体，取消伤害: " + victim.getType().name());
+                    plugin.getLogger().info("穿透链抛射物命中已穿透实体，取消伤害并移除: " + victim.getType().name());
                 }
                 return;
             }
@@ -258,13 +259,21 @@ public class ProjectileEventHandler implements Listener {
             String weaponTitle = data.getWeaponTitle();
             ProjectilesConfig config = data.getConfig();
 
+            if (plugin.getConfig().getBoolean("debug", false)) {
+                plugin.getLogger().info("[穿透调试] 原弹射物位置=" + originalProjectile.getLocation() +
+                        " velocity=" + originalProjectile.getVelocity() +
+                        " lastVelocity=" + data.getLastVelocity() +
+                        " 命中实体位置=" + hitEntity.getLocation() +
+                        " 射手位置=" + shooter.getLocation());
+            }
+
             data.applyPenetrate();
 
             if (hitEntity instanceof LivingEntity) {
                 data.addTrackedTarget((LivingEntity) hitEntity);
             }
 
-            Vector fallbackVelocity = data.getLastVelocity();
+            Vector bulletVelocity = data.getLastVelocity();
 
             Location respawnLocation = calculatePenetrateRespawnLocation(originalProjectile, hitEntity, data);
             if (respawnLocation == null) {
@@ -276,16 +285,12 @@ public class ProjectileEventHandler implements Listener {
             double minDistance = getEstimatedEntityWidth(hitEntity) + 0.5;
 
             if (distanceToEntity < minDistance) {
-                Vector direction = originalProjectile.getVelocity();
-                if (direction.lengthSquared() < 0.001) {
-                    direction = fallbackVelocity;
-                }
-                respawnLocation.add(direction.normalize().multiply(minDistance - distanceToEntity + 0.3));
+                respawnLocation.add(bulletVelocity.normalize().multiply(minDistance - distanceToEntity + 0.3));
             }
 
             Vector originalVelocity = originalProjectile.getVelocity();
             if (originalVelocity.lengthSquared() < 0.001) {
-                originalVelocity = fallbackVelocity;
+                originalVelocity = bulletVelocity;
             }
             Vector newVelocity = originalVelocity.clone();
 
@@ -347,7 +352,7 @@ public class ProjectileEventHandler implements Listener {
 
             double entityWidth = getEstimatedEntityWidth(hitEntity);
 
-            double offsetDistance = entityWidth + 1.5;
+            double offsetDistance = entityWidth + 3.5;
 
             Vector offset = direction.clone().multiply(offsetDistance);
             Location respawnLoc = projectileLoc.clone().add(offset);
@@ -470,10 +475,10 @@ public class ProjectileEventHandler implements Listener {
 
             if (plugin.getConfig().getBoolean("debug", false)) {
                 plugin.getLogger().info(String.format(
-                        "生成穿透抛射物: 类型=%s, 位置=%.1f,%.1f,%.1f, 速度=%.2f",
+                        "生成穿透抛射物: 类型=%s, 位置=%.1f,%.1f,%.1f, 速度=%.2f, 向量=%s",
                         projectileType.name(),
                         location.getX(), location.getY(), location.getZ(),
-                        velocity.length()
+                        velocity.length(), velocity
                 ));
             }
 
