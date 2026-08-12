@@ -352,7 +352,7 @@ public class ProjectileEventHandler implements Listener {
 
             double entityWidth = getEstimatedEntityWidth(hitEntity);
 
-            double offsetDistance = entityWidth + 1.5;
+            double offsetDistance = entityWidth / 2.0 + 0.5;
 
             Vector offset = direction.clone().multiply(offsetDistance);
             Location respawnLoc = projectileLoc.clone().add(offset);
@@ -395,6 +395,7 @@ public class ProjectileEventHandler implements Listener {
                 return 0.6;
             case SPIDER:
             case CAVE_SPIDER:
+            case IRON_GOLEM:
                 return 1.4;
             case ENDERMAN:
                 return 0.6;
