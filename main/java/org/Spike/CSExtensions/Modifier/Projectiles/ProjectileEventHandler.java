@@ -50,17 +50,7 @@ public class ProjectileEventHandler implements Listener {
     }
 
     private static EntityType getEntityType(ProjectileData originalData) {
-        EntityType projectileType = EntityType.ARROW;
-
-        for (org.bukkit.World world : Bukkit.getWorlds()) {
-            for (Entity entity : world.getEntities()) {
-                if (entity instanceof Projectile &&
-                        entity.getEntityId() == originalData.getEntityId()) {
-                    projectileType = entity.getType();
-                    break;
-                }
-            }
-        }
+        EntityType projectileType = originalData.getProjectileType();
 
         if (projectileType == EntityType.EGG) {
             projectileType = EntityType.SNOWBALL;
@@ -176,6 +166,15 @@ public class ProjectileEventHandler implements Listener {
             }
 
             Entity victim = event.getEntity();
+
+            if (data.getTrackedTargets().contains(victim.getEntityId())) {
+                event.setCancelled(true);
+                if (plugin.getConfig().getBoolean("debug", false)) {
+                    plugin.getLogger().info("穿透链抛射物命中已穿透实体，取消伤害: " + victim.getType().name());
+                }
+                return;
+            }
+
             Player shooter = Bukkit.getPlayer(data.getShooterId());
             data.markHitEntity();
 
@@ -264,14 +263,6 @@ public class ProjectileEventHandler implements Listener {
             if (hitEntity instanceof LivingEntity) {
                 data.addTrackedTarget((LivingEntity) hitEntity);
             }
-
-            String immunityKey = "CSE_Penetrate_Immune_" + weaponTitle + "_" + data.getShooterId();
-            hitEntity.setMetadata(immunityKey, new FixedMetadataValue(plugin, true));
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (hitEntity.isValid()) {
-                    hitEntity.removeMetadata(immunityKey, plugin);
-                }
-            }, 20L);
 
             Location respawnLocation = calculatePenetrateRespawnLocation(originalProjectile, hitEntity);
             if (respawnLocation == null) {

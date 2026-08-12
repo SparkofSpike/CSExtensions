@@ -1,6 +1,7 @@
 package org.Spike.CSExtensions.Modifier.Projectiles;
 
 import org.bukkit.Location;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -15,6 +16,7 @@ public class ProjectileData {
     private final UUID shooterId;
     private final String weaponTitle;
     private final ProjectilesConfig config;
+    private final EntityType projectileType;
 
     private int penetrateCount = 0;
     private int bounceCount = 0;
@@ -62,6 +64,7 @@ public class ProjectileData {
         this.shooterId = shooter.getUniqueId();
         this.weaponTitle = weaponTitle;
         this.config = config;
+        this.projectileType = projectile.getType();
         this.shooterLocation = shooter.getLocation().clone();
         this.lastVelocity = projectile.getVelocity().clone();
         if (config.getBounce().isEnabled()) {
@@ -250,6 +253,10 @@ public class ProjectileData {
 
     public int getEntityId() {
         return entityId;
+    }
+
+    public EntityType getProjectileType() {
+        return projectileType;
     }
 
     public UUID getShooterId() {

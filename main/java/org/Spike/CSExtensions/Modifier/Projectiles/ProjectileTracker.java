@@ -99,6 +99,7 @@ public class ProjectileTracker {
         }
 
         registerProjectileInternal(newProjectile.getEntityId(), newData, shooter, config);
+        projectileCache.put(newProjectile.getEntityId(), newProjectile);
 
         if (plugin.getConfig().getBoolean("debug", false)) {
             plugin.getLogger().info("[Homing继承] 弹跳后抛射物继承 - 激活状态: " +
@@ -150,6 +151,7 @@ public class ProjectileTracker {
         }
 
         registerProjectileInternal(projectile.getEntityId(), data, shooter, config);
+        projectileCache.put(projectile.getEntityId(), projectile);
 
         if (plugin.getConfig().getBoolean("debug", false)) {
             plugin.getLogger().info("=== 注册抛射物调试 ===");
