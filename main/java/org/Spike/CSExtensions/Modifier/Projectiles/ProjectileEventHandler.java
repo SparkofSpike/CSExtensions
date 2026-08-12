@@ -351,31 +351,68 @@ public class ProjectileEventHandler implements Listener {
                 direction = data.getLastVelocity().normalize();
             }
 
-            double[] dims = getEntityBoxDimensions(hitEntity);
-            double offsetDistance;
-            if (dims != null) {
-                // 弹道方向上的实体半尺寸（支撑函数）：|dx|*半宽 + |dy|*半高 + |dz|*半深
-                double halfExtent = Math.abs(direction.getX()) * dims[0] / 2.0
-                        + Math.abs(direction.getY()) * dims[1] / 2.0
-                        + Math.abs(direction.getZ()) * dims[2] / 2.0;
-                offsetDistance = halfExtent + 0.5;
-            } else {
-                offsetDistance = Math.max(getEstimatedEntityWidth(hitEntity),
-                        getEstimatedEntityHeight(hitEntity)) / 2.0 + 0.5;
-            }
+            Location projectileLoc = projectile.getLocation();
+            AxisAlignedBB box = getEntityBoundingBox(hitEntity);
+            Location respawnLoc;
+            if (box != null) {
+                // 射线-盒求交（slab 法）：从弹射物当前位置沿弹道方向求与碰撞盒的交点，
+                // 重生点 = 穿出点外 0.5 格，严格落在弹道线上（弹道不经过实体中心时也能连成一线）。
+                double tmin = -Double.MAX_VALUE;
+                double tmax = Double.MAX_VALUE;
 
-            Vector offset = direction.clone().multiply(offsetDistance);
-            // 基准用碰撞盒中心而非弹射物当前位置：SpikeShot 的射线检测会在子弹
-            // 到达目标前就触发伤害事件，弹射物位置此时还在目标前方，
-            // 用它作基准会让新弹射物生成在目标前方、立即撞回目标导致穿透断链。
-            // getLocation() 返回脚部位置，需加上半高才是碰撞盒中心。
-            Location entityCenter = hitEntity.getLocation().clone();
-            if (dims != null) {
-                entityCenter.add(0, dims[1] / 2.0, 0);
+                double px = projectileLoc.getX(), py = projectileLoc.getY(), pz = projectileLoc.getZ();
+                double dx = direction.getX(), dy = direction.getY(), dz = direction.getZ();
+
+                if (Math.abs(dx) < 1.0E-6) {
+                    if (px < box.a || px > box.d) return null;
+                } else {
+                    double t1 = (box.a - px) / dx;
+                    double t2 = (box.d - px) / dx;
+                    tmin = Math.max(tmin, Math.min(t1, t2));
+                    tmax = Math.min(tmax, Math.max(t1, t2));
+                }
+                if (Math.abs(dy) < 1.0E-6) {
+                    if (py < box.b || py > box.e) return null;
+                } else {
+                    double t1 = (box.b - py) / dy;
+                    double t2 = (box.e - py) / dy;
+                    tmin = Math.max(tmin, Math.min(t1, t2));
+                    tmax = Math.min(tmax, Math.max(t1, t2));
+                }
+                if (Math.abs(dz) < 1.0E-6) {
+                    if (pz < box.c || pz > box.f) return null;
+                } else {
+                    double t1 = (box.c - pz) / dz;
+                    double t2 = (box.f - pz) / dz;
+                    tmin = Math.max(tmin, Math.min(t1, t2));
+                    tmax = Math.min(tmax, Math.max(t1, t2));
+                }
+
+                if (tmin > tmax) return null;  // 射线未穿过碰撞盒
+
+                double t = tmax + 0.5;
+                respawnLoc = projectileLoc.clone().add(direction.clone().multiply(t));
             } else {
-                entityCenter.add(0, getEstimatedEntityHeight(hitEntity) / 2.0, 0);
+                // 回退（NMS 不可用）：碰撞盒中心 + 方向偏移
+                double[] dims = getEntityBoxDimensions(hitEntity);
+                double offsetDistance;
+                if (dims != null) {
+                    double halfExtent = Math.abs(direction.getX()) * dims[0] / 2.0
+                            + Math.abs(direction.getY()) * dims[1] / 2.0
+                            + Math.abs(direction.getZ()) * dims[2] / 2.0;
+                    offsetDistance = halfExtent + 0.5;
+                } else {
+                    offsetDistance = Math.max(getEstimatedEntityWidth(hitEntity),
+                            getEstimatedEntityHeight(hitEntity)) / 2.0 + 0.5;
+                }
+                Location entityCenter = hitEntity.getLocation().clone();
+                if (dims != null) {
+                    entityCenter.add(0, dims[1] / 2.0, 0);
+                } else {
+                    entityCenter.add(0, getEstimatedEntityHeight(hitEntity) / 2.0, 0);
+                }
+                respawnLoc = entityCenter.add(direction.clone().multiply(offsetDistance));
             }
-            Location respawnLoc = entityCenter.add(offset);
 
             for (int i = 0; i < 3; i++) {
                 if (!respawnLoc.getBlock().getType().isSolid()) {
@@ -392,8 +429,8 @@ public class ProjectileEventHandler implements Listener {
             if (plugin.getConfig().getBoolean("debug", false)) {
                 double distance = respawnLoc.distance(hitEntity.getLocation());
                 plugin.getLogger().info(String.format(
-                        "穿透重生位置: 实体=%s, 偏移=%.1f, 实际距离=%.1f",
-                        hitEntity.getType().name(), offsetDistance, distance
+                        "穿透重生位置: 实体=%s, 实际距离=%.1f",
+                        hitEntity.getType().name(), distance
                 ));
             }
 
@@ -406,15 +443,25 @@ public class ProjectileEventHandler implements Listener {
     }
 
     /**
-     * 通过 NMS 读取实体的实际碰撞盒尺寸 [宽, 高, 深]；失败时返回 null（调用方回退到查表近似）。
+     * 通过 NMS 读取实体的实际碰撞盒；失败时返回 null。
      */
-    private double[] getEntityBoxDimensions(Entity entity) {
+    private AxisAlignedBB getEntityBoundingBox(Entity entity) {
         try {
-            AxisAlignedBB box = ((CraftEntity) entity).getHandle().getBoundingBox();
-            return new double[]{box.d - box.a, box.e - box.b, box.f - box.c};
+            return ((CraftEntity) entity).getHandle().getBoundingBox();
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * 通过 NMS 读取实体的实际碰撞盒尺寸 [宽, 高, 深]；失败时返回 null（调用方回退到查表近似）。
+     */
+    private double[] getEntityBoxDimensions(Entity entity) {
+        AxisAlignedBB box = getEntityBoundingBox(entity);
+        if (box == null) {
+            return null;
+        }
+        return new double[]{box.d - box.a, box.e - box.b, box.f - box.c};
     }
 
     private double getEstimatedEntityWidth(Entity entity) {
