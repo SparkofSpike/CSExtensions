@@ -11,7 +11,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class WeaponMythicHandler {
+public class WeaponMythicConfig {
     private final CSExtensions plugin;
     private final ModifierManager modifierManager;
     private final Map<String, List<MythicEffect>> weaponEffects = new HashMap<>();
@@ -21,7 +21,7 @@ public class WeaponMythicHandler {
 
     private static final Pattern TRIGGER_PATTERN = Pattern.compile("~on(\\w+)(?::(\\d+))?");
 
-    public WeaponMythicHandler(CSExtensions plugin, ModifierManager modifierManager) {
+    public WeaponMythicConfig(CSExtensions plugin, ModifierManager modifierManager) {
         this.plugin = plugin;
         this.modifierManager = modifierManager;
         loadConfigs();

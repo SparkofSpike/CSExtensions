@@ -27,6 +27,10 @@ Projectiles:
   Enable: true
   Debug: false
 
+Mythic:
+  Enable: true
+  Debug: false
+
 SpikeElements:
   Enable: true
   Debug: false

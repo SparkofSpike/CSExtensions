@@ -132,13 +132,11 @@ public class ActiveHealthEffect {
 
             nmsEntity.noDamageTicks = 0;
 
-            entity.damage(amount);
+            entity.damage(amount,findEntityByUuid(shooterId));
 
             nmsEntity.noDamageTicks = 0;
 
-        } catch (Exception e) {
-            entity.damage(amount);
-        }
+        } catch (Exception e) {}
     }
 
     public UUID getTargetId() {

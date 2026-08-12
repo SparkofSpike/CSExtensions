@@ -1,7 +1,8 @@
 package org.Spike.CSExtensions.Modifier.Accessories;
 
 import org.Spike.CSExtensions.CSExtensions;
-import org.Spike.CSExtensions.Modifier.Accessories.Mythic.AccessoryMythicHandler;
+import org.Spike.CSExtensions.Modifier.Mythic.accessory.AccessoryMythicConfig;
+import org.Spike.CSExtensions.Modifier.Mythic.accessory.AccessoryMythicHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -31,8 +32,13 @@ public class AccessoriesManager implements Listener {
         this.plugin = plugin;
         this.config = new AccessoriesConfig(plugin);
         this.calculator = new AccessoriesCalculator();
-        this.mythicHandler = new AccessoryMythicHandler(plugin, this);
+
+        AccessoryMythicConfig mythicConfig = config.getMythicConfig();
+        this.mythicHandler = new AccessoryMythicHandler(plugin, this, mythicConfig);
+
         this.accessoriesHandler = new AccessoriesHandler(plugin, this);
+
+        Bukkit.getPluginManager().registerEvents(mythicHandler, plugin);
         Bukkit.getPluginManager().registerEvents(accessoriesHandler, plugin);
         Bukkit.getPluginManager().registerEvents(this, plugin);
         startUpdateTask();

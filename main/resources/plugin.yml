@@ -2,8 +2,7 @@ name: CSExtensions
 version: 1.0.0
 main: org.Spike.CSExtensions.CSExtensions
 api-version: 1.8
-depend: [CrackShot]
-softdepend: [MythicMobs]
+softdepend: [SpikeShot, CrackShot, MythicMobs]
 authors: [Spike]
 description: CrackShot扩展插件
 

@@ -7,19 +7,10 @@ public class ProjectilesConfig {
 
     private boolean hidden;
     private KnockbackType noknock;
-
-
     private PenetrateConfig penetrate;
-
-
     private ReturnConfig returnConfig;
-
-
     private BounceConfig bounce;
-
-
     private HomingConfig homing;
-
 
     public enum KnockbackType {
         NONE("none"),

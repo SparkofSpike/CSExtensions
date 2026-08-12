@@ -1,5 +1,6 @@
 package org.Spike.CSExtensions.Modifier.Accessories;
 
+import org.Spike.CSExtensions.Modifier.Mythic.accessory.AccessoryMythicConfig;
 import org.bukkit.Material;
 
 import java.util.*;
@@ -12,6 +13,7 @@ public class AccessoriesData {
     private final short data;
     private final double weight;
     private final boolean isArmor;
+    private AccessoryMythicConfig mythicConfig;
 
     private final Map<AttributeType, List<AccessoryAttribute>> attributes;
 

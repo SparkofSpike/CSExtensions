@@ -1,7 +1,7 @@
 package org.Spike.CSExtensions.Modifier.Accessories;
 
 import org.Spike.CSExtensions.CSExtensions;
-import org.Spike.CSExtensions.Modifier.Accessories.Mythic.AccessoryMythicConfig;
+import org.Spike.CSExtensions.Modifier.Mythic.accessory.AccessoryMythicConfig;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -80,25 +80,26 @@ public class AccessoriesConfig {
     }
 
     private AccessoriesData parseAccessory(String accessoryId, ConfigurationSection section) {
-        plugin.getLogger().info("[饰品配置] 解析饰品: " + accessoryId);
-        if (section.contains("Mythic")) {
-            plugin.getLogger().info("[饰品配置] 找到Mythic配置");
-            List<String> mythicList = section.getStringList("Mythic");
-            plugin.getLogger().info("[饰品配置] Mythic列表大小: " + mythicList.size());
-            for (String line : mythicList) {
-                plugin.getLogger().info("[饰品配置] Mythic行: " + line);
+        if (plugin.getConfig().getBoolean("debug")) {
+            plugin.getLogger().info("[饰品配置] 解析饰品: " + accessoryId);
+            if (section.contains("Mythic")) {
+                plugin.getLogger().info("[饰品配置] 找到Mythic配置");
+                List<String> mythicList = section.getStringList("Mythic");
+                plugin.getLogger().info("[饰品配置] Mythic列表大小: " + mythicList.size());
+                for (String line : mythicList) {
+                    plugin.getLogger().info("[饰品配置] Mythic行: " + line);
+                }
+            } else if (section.contains("mythic")) {
+                plugin.getLogger().info("[饰品配置] 找到mythic配置");
+                List<String> mythicList = section.getStringList("mythic");
+                plugin.getLogger().info("[饰品配置] mythic列表大小: " + mythicList.size());
+            } else {
+                plugin.getLogger().info("[饰品配置] 没有Mythic配置");
             }
-        } else if (section.contains("mythic")) {
-            plugin.getLogger().info("[饰品配置] 找到mythic配置（小写）");
-            List<String> mythicList = section.getStringList("mythic");
-            plugin.getLogger().info("[饰品配置] mythic列表大小: " + mythicList.size());
-        } else {
-            plugin.getLogger().info("[饰品配置] 没有Mythic配置");
+            if (section == null) {
+                return null;
+            }
         }
-        if (section == null) {
-            return null;
-        }
-
         String name = section.getString("name", "未命名饰品");
         List<String> lore = section.getStringList("lore");
         Material material = parseMaterial(section.getString("material", "PAPER"));

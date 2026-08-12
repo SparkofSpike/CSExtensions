@@ -1,4 +1,4 @@
-package org.Spike.CSExtensions.Modifier.Mythic;
+package org.Spike.CSExtensions.Modifier.Mythic.core;
 
 import org.bukkit.entity.LivingEntity;
 

@@ -5,8 +5,8 @@ import org.Spike.CSExtensions.Modifier.Accessories.AccessoriesData;
 import org.Spike.CSExtensions.Modifier.Accessories.AccessoriesHandler;
 import org.Spike.CSExtensions.Modifier.Accessories.AccessoriesManager;
 import org.Spike.CSExtensions.Modifier.HealthAdjust.HealthAdjustHandler;
-import org.Spike.CSExtensions.Modifier.Mythic.MythicConfigManager;
-import org.Spike.CSExtensions.Modifier.Mythic.MythicEventHandler;
+import org.Spike.CSExtensions.Modifier.Mythic.weapon.WeaponMythicConfig;
+import org.Spike.CSExtensions.Modifier.Mythic.weapon.MythicEventHandler;
 import org.Spike.CSExtensions.Modifier.Projectiles.*;
 import org.Spike.CSExtensions.Modifier.ReloadBar.ReloadBarManager;
 import org.Spike.CSExtensions.Modifier.Services.ProjectileEffectCoordinator;
@@ -72,7 +72,7 @@ public class CSExtensions extends JavaPlugin implements Listener {
 
     private HealthAdjustHandler healthAdjustHandler;
 
-    private MythicConfigManager mythicConfigManager;
+    private WeaponMythicConfig mythicConfigManager;
     private MythicEventHandler mythicEventHandler;
 
     private SpikeElementsManager spikeElementsManager;
@@ -85,7 +85,6 @@ public class CSExtensions extends JavaPlugin implements Listener {
     public void onEnable() {
         csUtility = new CSUtility();
         createConfig();
-
         reloadBarManager = new ReloadBarManager(this);
 
         modifierManager = new ModifierManager(this);
@@ -117,7 +116,7 @@ public class CSExtensions extends JavaPlugin implements Listener {
         }
 
         if (getConfig().getBoolean("Mythic.Enable", true) && Bukkit.getPluginManager().getPlugin("MythicMobs") != null) {
-            mythicConfigManager = new MythicConfigManager(this, modifierManager);
+            mythicConfigManager = new WeaponMythicConfig(this, modifierManager);
             mythicEventHandler = new MythicEventHandler(this, mythicConfigManager, csUtility);
             getLogger().info("Mythic系统已启用");
         } else if (getConfig().getBoolean("Mythic.Enable", true)) {
@@ -130,13 +129,13 @@ public class CSExtensions extends JavaPlugin implements Listener {
 
         this.healthAdjustHandler = new HealthAdjustHandler(this, projectilesManager);
 
-        if (getConfig().getBoolean("SpikeElements.Enable", true)) {
+        if (getConfig().getBoolean("SpikeElements.Enable", true) && Bukkit.getPluginManager().getPlugin("MythicMobs") != null) {
             spikeElementsManager = new SpikeElementsManager(this);
             getLogger().info("SpikeElements系统已启用");
+        } else if (getConfig().getBoolean("SpikeElements.Enable", true)) {
+            getLogger().warning("SpikeElements系统未启用：需要MythicMobs插件");
         }
         accessoriesManager = new AccessoriesManager(this);
-        accessoriesHandler = new AccessoriesHandler(this, accessoriesManager);
-        Bukkit.getPluginManager().registerEvents(accessoriesHandler, this);
 
         getLogger().info("CSExtensions 已开启!");
         getLogger().info("Template系统已加载 " + modifierManager.getLoadedWeaponIds().size() + " 个武器配置");
@@ -414,8 +413,6 @@ public class CSExtensions extends JavaPlugin implements Listener {
 
         Player player = event.getPlayer();
 
-        reloadBarManager.startReload(event);
-
         if (accessoriesManager != null) {
             String weaponId = event.getWeaponTitle();
             Set<String> weaponTags = Collections.emptySet();
@@ -425,6 +422,20 @@ public class CSExtensions extends JavaPlugin implements Listener {
             }
             double reloadSpeedMultiplier = 1.0;
             reloadSpeedMultiplier *= accessoriesManager.getReloadMultiplier(player, weaponTags);
+            double AccessoryMultiplier = reloadSpeedMultiplier;
+            double fastMultiplier=1,slowMultiplier=1;
+            if (player.hasPotionEffect(PotionEffectType.FAST_DIGGING)) {
+                int fastLevel = getPotionEffectLevel(player, PotionEffectType.FAST_DIGGING);
+                fastMultiplier = getConfig().getDouble("CSPotionEffect" +
+                        ".haste-reloadtime-multiplier." + fastLevel);
+                reloadSpeedMultiplier *= fastMultiplier;
+            }
+            if (player.hasPotionEffect(PotionEffectType.SLOW_DIGGING)) {
+                int slowLevel = getPotionEffectLevel(player, PotionEffectType.SLOW_DIGGING);
+                slowMultiplier = getConfig().getDouble("CSPotionEffect" +
+                        ".fatigue-reloadtime-multiplier." + slowLevel);
+                reloadSpeedMultiplier *= slowMultiplier;
+            }
 
             if (reloadSpeedMultiplier != 1.0) {
                 int originalDuration = event.getReloadDuration();
@@ -433,11 +444,16 @@ public class CSExtensions extends JavaPlugin implements Listener {
 
                 if (getConfig().getBoolean("debug")) {
                     getLogger().info(String.format("[主类监听器] 玩家 %s 装弹时间从 %dtick 变为 %dtick (饰品倍率: " +
-                                    "x%.2f)",
-                            player.getName(), originalDuration, newDuration, reloadSpeedMultiplier));
+                                    "x%.2f 急迫倍率: x%.2f 疲劳倍率: x%.2f 总倍率: x%.2f",
+                            player.getName(), originalDuration, newDuration,AccessoryMultiplier,
+                            fastMultiplier,slowMultiplier,
+                            reloadSpeedMultiplier));
                 }
             }
+            reloadBarManager.startReload(event);
         }
+
+
         if (getConfig().getBoolean("debug")) {
             getLogger().info("[主类] 事件结束，最终时间: " + event.getReloadDuration());
         }

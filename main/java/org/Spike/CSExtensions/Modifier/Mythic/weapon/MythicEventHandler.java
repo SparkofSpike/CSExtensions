@@ -1,10 +1,12 @@
-package org.Spike.CSExtensions.Modifier.Mythic.core;
+package org.Spike.CSExtensions.Modifier.Mythic.weapon;
 
 import com.shampaggon.crackshot.CSUtility;
 import com.shampaggon.crackshot.events.*;
 import org.Spike.CSExtensions.CSExtensions;
 import org.Spike.CSExtensions.Modifier.Mythic.MythicDropListener;
-import org.Spike.CSExtensions.Modifier.Mythic.weapon.MythicConfigManager;
+import org.Spike.CSExtensions.Modifier.Mythic.core.MythicEffect;
+import org.Spike.CSExtensions.Modifier.Mythic.core.MythicSkillExecutor;
+import org.Spike.CSExtensions.Modifier.Mythic.core.MythicTrigger;
 import org.Spike.CSExtensions.Modifier.Services.HitLocationTarget;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -24,7 +26,7 @@ import java.util.*;
 
 public class MythicEventHandler implements Listener {
     private final CSExtensions plugin;
-    private final MythicConfigManager configManager;
+    private final WeaponMythicConfig configManager;
     private final CSUtility csUtility;
     private final MythicDropListener dropListener;
     private final MythicSkillExecutor executor;
@@ -33,7 +35,7 @@ public class MythicEventHandler implements Listener {
     private final Map<UUID, Map<String, Integer>> playerWeaponTimers = new HashMap<>();
     private final Map<Integer, String> taskIdToWeaponMap = new HashMap<>();
 
-    public MythicEventHandler(CSExtensions plugin, MythicConfigManager configManager, CSUtility csUtility) {
+    public MythicEventHandler(CSExtensions plugin, WeaponMythicConfig configManager, CSUtility csUtility) {
         this.plugin = plugin;
         this.configManager = configManager;
         this.csUtility = csUtility;
@@ -61,7 +63,7 @@ public class MythicEventHandler implements Listener {
             return;
         }
 
-        handleTrigger(event.getPlayer(), weaponTitle, MythicTrigger.SHOOT, null, null, null);
+        handleTrigger(event.getPlayer(), weaponTitle, MythicTrigger.SHOOT, null, null, null,null);
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -69,15 +71,6 @@ public class MythicEventHandler implements Listener {
         String weaponTitle = event.getWeaponTitle();
 
         if (!configManager.hasMythicConfig(weaponTitle)) {
-            return;
-        }
-
-        boolean hasHitTrigger = configManager.hasTriggerType(weaponTitle, MythicTrigger.HIT);
-        boolean hasCritTrigger = configManager.hasTriggerType(weaponTitle, MythicTrigger.CRIT);
-        boolean hasHeadshotTrigger = configManager.hasTriggerType(weaponTitle, MythicTrigger.HEADSHOT);
-        boolean hasKillTrigger = configManager.hasTriggerType(weaponTitle, MythicTrigger.KILL);
-
-        if (!hasHitTrigger && !hasCritTrigger && !hasHeadshotTrigger && !hasKillTrigger) {
             return;
         }
 
@@ -89,49 +82,25 @@ public class MythicEventHandler implements Listener {
         LivingEntity victim = (LivingEntity) event.getVictim();
         Set<String> weaponTags = getWeaponTags(weaponTitle);
 
-        if (hasHitTrigger) {
-            handleTrigger(player, weaponTitle, MythicTrigger.HIT, victim, player, weaponTags);
+        handleHitLocationForHitTrigger(player, weaponTitle, victim, weaponTags);
+
+        handleHitLocationForHitBlockTrigger(player, weaponTitle, victim, weaponTags);
+
+        if (configManager.hasTriggerType(weaponTitle, MythicTrigger.HIT)) {
+            handleTrigger(player, weaponTitle, MythicTrigger.HIT, victim, player, weaponTags, null);
         }
 
-        if (event.isCritical() && hasCritTrigger) {
-            handleTrigger(player, weaponTitle, MythicTrigger.CRIT, victim, player, weaponTags);
+        if (event.isCritical() && configManager.hasTriggerType(weaponTitle, MythicTrigger.CRIT)) {
+            handleTrigger(player, weaponTitle, MythicTrigger.CRIT, victim, player, weaponTags, null);
         }
 
-        if (event.isHeadshot() && hasHeadshotTrigger) {
-            handleTrigger(player, weaponTitle, MythicTrigger.HEADSHOT, victim, player, weaponTags);
+        if (event.isHeadshot() && configManager.hasTriggerType(weaponTitle, MythicTrigger.HEADSHOT)) {
+            handleTrigger(player, weaponTitle, MythicTrigger.HEADSHOT, victim, player, weaponTags, null);
         }
 
-        if (hasKillTrigger && victim.getHealth() - event.getDamage() <= 0) {
-            handleTrigger(player, weaponTitle, MythicTrigger.KILL, victim, player, weaponTags);
-        }
-
-        handleHitLocationTrigger(player, weaponTitle, victim, weaponTags);
-    }
-
-    private void handleHitLocationTrigger(Player player, String weaponTitle, LivingEntity victim, Set<String> weaponTags) {
-        List<MythicEffect> effects = configManager.getEffects(weaponTitle, MythicTrigger.HIT);
-        if (effects.isEmpty()) return;
-
-        boolean hasHitLocationSelector = false;
-        for (MythicEffect effect : effects) {
-            if ("@hitlocation".equals(effect.getTargetSelector())) {
-                hasHitLocationSelector = true;
-                break;
-            }
-        }
-
-        if (!hasHitLocationSelector) return;
-
-        HitLocationTarget locationTarget = new HitLocationTarget(victim.getLocation());
-
-        for (MythicEffect effect : effects) {
-            if (!"@hitlocation".equals(effect.getTargetSelector())) continue;
-
-            if (!effect.shouldTrigger(Math.random())) continue;
-            if (!effect.checkConditions(player, victim, weaponTags)) continue;
-
-            executor.executeSkill(player, effect.getSkillName(), effect.getTargetSelector(),
-                    locationTarget.getLocation(), victim, player);
+        if (configManager.hasTriggerType(weaponTitle, MythicTrigger.KILL) &&
+                victim.getHealth() - event.getDamage() <= 0) {
+            handleTrigger(player, weaponTitle, MythicTrigger.KILL, victim, player, weaponTags, null);
         }
     }
 
@@ -146,31 +115,95 @@ public class MythicEventHandler implements Listener {
         if (hitBlock == null) return;
 
         Location hitLocation = hitBlock.getLocation().add(0.5, 0.5, 0.5);
-        HitLocationTarget locationTarget = new HitLocationTarget(hitLocation);
         Set<String> weaponTags = getWeaponTags(weaponTitle);
 
-        handleTrigger(player, weaponTitle, MythicTrigger.HITBLOCK, null, player, weaponTags);
+        handleHitBlockTriggerWithLocation(player, weaponTitle, hitLocation, weaponTags);
 
-        handleHitLocationFromBlock(player, weaponTitle, locationTarget, weaponTags);
+        handleHitLocationForHitTriggerFromBlock(player, weaponTitle, hitLocation, weaponTags);
 
         if (plugin.getConfig().getBoolean("debug", false)) {
-            plugin.getLogger().info("[Mythic] 方块命中触发: " + weaponTitle +
-                    " 位置: " + hitLocation);
+            plugin.getLogger().info("[Mythic] 方块命中触发: " + weaponTitle + " 位置: " + hitLocation);
         }
     }
 
-    private void handleHitLocationFromBlock(Player player, String weaponTitle, HitLocationTarget locationTarget, Set<String> weaponTags) {
+    private void handleHitBlockTriggerWithLocation(Player player, String weaponTitle,
+                                                   Location hitLocation, Set<String> weaponTags) {
+        List<MythicEffect> effects = configManager.getEffects(weaponTitle, MythicTrigger.HITBLOCK);
+        if (effects.isEmpty()) return;
+
+        for (MythicEffect effect : effects) {
+            if (!effect.shouldTrigger(Math.random())) continue;
+            if (!effect.checkConditions(player, null, weaponTags)) continue;
+
+            executor.executeSkill(player, effect.getSkillName(), effect.getTargetSelector(),
+                    hitLocation, null, player);
+        }
+    }
+
+    private void handleHitLocationForHitTrigger(Player player, String weaponTitle,
+                                                LivingEntity victim, Set<String> weaponTags) {
         List<MythicEffect> effects = configManager.getEffects(weaponTitle, MythicTrigger.HIT);
         if (effects.isEmpty()) return;
 
         for (MythicEffect effect : effects) {
             if (!"@hitlocation".equals(effect.getTargetSelector())) continue;
+            if (!effect.shouldTrigger(Math.random())) continue;
+            if (!effect.checkConditions(player, victim, weaponTags)) continue;
 
+            executor.executeSkill(player, effect.getSkillName(), effect.getTargetSelector(),
+                    victim.getLocation(), victim, player);
+        }
+    }
+
+    private void handleHitLocationForHitTriggerFromBlock(Player player, String weaponTitle,
+                                                         Location hitLocation, Set<String> weaponTags) {
+        List<MythicEffect> effects = configManager.getEffects(weaponTitle, MythicTrigger.HIT);
+        if (effects.isEmpty()) return;
+
+        for (MythicEffect effect : effects) {
+            if (!"@hitlocation".equals(effect.getTargetSelector())) continue;
             if (!effect.shouldTrigger(Math.random())) continue;
             if (!effect.checkConditions(player, null, weaponTags)) continue;
 
             executor.executeSkill(player, effect.getSkillName(), effect.getTargetSelector(),
-                    locationTarget.getLocation(), null, player);
+                    hitLocation, null, player);
+        }
+    }
+
+    private void handleHitLocationForHitBlockTrigger(Player player, String weaponTitle,
+                                                     LivingEntity victim, Set<String> weaponTags) {
+        List<MythicEffect> effects = configManager.getEffects(weaponTitle, MythicTrigger.HITBLOCK);
+        if (effects.isEmpty()) return;
+
+        for (MythicEffect effect : effects) {
+            if (!"@hitlocation".equals(effect.getTargetSelector())) continue;
+            if (!effect.shouldTrigger(Math.random())) continue;
+            if (!effect.checkConditions(player, victim, weaponTags)) continue;
+
+            executor.executeSkill(player, effect.getSkillName(), effect.getTargetSelector(),
+                    victim.getLocation(), victim, player);
+        }
+    }
+
+    private void handleTrigger(Player player, String weaponTitle, MythicTrigger trigger,
+                               LivingEntity target, LivingEntity triggerEntity,
+                               Set<String> weaponTags, Location forcedLocation) {
+        List<MythicEffect> effects = configManager.getEffects(weaponTitle, trigger);
+        if (effects.isEmpty()) return;
+
+        for (MythicEffect effect : effects) {
+            if ("@hitlocation".equals(effect.getTargetSelector())) continue;
+
+            if (!effect.shouldTrigger(Math.random())) continue;
+            if (!effect.checkConditions(player, target, weaponTags)) continue;
+
+            Location location = forcedLocation;
+            if (location == null) {
+                location = target != null ? target.getLocation() : player.getLocation();
+            }
+
+            executor.executeSkill(player, effect.getSkillName(), effect.getTargetSelector(),
+                    location, target, triggerEntity);
         }
     }
 
@@ -183,7 +216,7 @@ public class MythicEventHandler implements Listener {
             return;
         }
 
-        handleTrigger(event.getPlayer(), weaponTitle, MythicTrigger.RELOAD, null, null, null);
+        handleTrigger(event.getPlayer(), weaponTitle, MythicTrigger.RELOAD, null, null, null,null);
     }
 
     @EventHandler
@@ -286,38 +319,6 @@ public class MythicEventHandler implements Listener {
 
         if (plugin.getConfig().getBoolean("debug", false)) {
             plugin.getLogger().info("[Mythic] 停止玩家所有定时器: " + playerId);
-        }
-    }
-
-    private void handleTrigger(Player player, String weaponTitle, MythicTrigger trigger,
-                               LivingEntity target, LivingEntity triggerEntity, Set<String> weaponTags) {
-        List<MythicEffect> effects = configManager.getEffects(weaponTitle, trigger);
-        if (effects.isEmpty()) return;
-
-        if (plugin.getConfig().getBoolean("debug", false)) {
-            plugin.getLogger().info("[Mythic调试] 触发处理: " + weaponTitle +
-                    " 触发类型: " + trigger +
-                    " 效果数量: " + effects.size());
-        }
-
-        for (MythicEffect effect : effects) {
-            if (!effect.shouldTrigger(Math.random())) {
-                if (plugin.getConfig().getBoolean("debug", false)) {
-                    plugin.getLogger().info("[Mythic调试] 几率检查失败: " + effect.getChance());
-                }
-                continue;
-            }
-
-            if (!effect.checkConditions(player, target, weaponTags)) {
-                if (plugin.getConfig().getBoolean("debug", false)) {
-                    plugin.getLogger().info("[Mythic调试] 条件检查失败");
-                }
-                continue;
-            }
-
-            Location location = target != null ? target.getLocation() : player.getLocation();
-            executor.executeSkill(player, effect.getSkillName(), effect.getTargetSelector(),
-                    location, target, triggerEntity);
         }
     }
 

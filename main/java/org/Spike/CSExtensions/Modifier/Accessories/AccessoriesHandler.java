@@ -3,11 +3,13 @@ package org.Spike.CSExtensions.Modifier.Accessories;
 import com.shampaggon.crackshot.events.WeaponPreShootEvent;
 import com.shampaggon.crackshot.events.WeaponReloadEvent;
 import org.Spike.CSExtensions.CSExtensions;
+import org.Spike.CSExtensions.Modifier.SpikeElements.SpikeElementsManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
+import java.util.Collections;
 import java.util.Set;
 
 public class AccessoriesHandler implements Listener {
@@ -24,8 +26,10 @@ public class AccessoriesHandler implements Listener {
         Player player = event.getPlayer();
         String weaponId = event.getWeaponTitle();
 
-        Set<String> weaponTags = plugin.getSpikeElementsManager().getTagReader()
-                .getWeaponTags(weaponId);
+        SpikeElementsManager spikeElementsManager = plugin.getSpikeElementsManager();
+        Set<String> weaponTags = spikeElementsManager != null
+                ? spikeElementsManager.getTagReader().getWeaponTags(weaponId)
+                : Collections.emptySet();
 
         double totalMultiplier = 1.0;
 
@@ -42,13 +46,15 @@ public class AccessoriesHandler implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.NORMAL)
+    @EventHandler(priority = EventPriority.HIGH)
     public void onWeaponPreShoot(WeaponPreShootEvent event) {
         Player player = event.getPlayer();
         String weaponId = event.getWeaponTitle();
 
-        Set<String> weaponTags = plugin.getSpikeElementsManager().getTagReader()
-                .getWeaponTags(weaponId);
+        SpikeElementsManager spikeElementsManager = plugin.getSpikeElementsManager();
+        Set<String> weaponTags = spikeElementsManager != null
+                ? spikeElementsManager.getTagReader().getWeaponTags(weaponId)
+                : Collections.emptySet();
 
         double totalMultiplier = 1.0;
 
@@ -56,12 +62,11 @@ public class AccessoriesHandler implements Listener {
 
         double originalSpread = event.getBulletSpread();
         double newSpread = originalSpread * totalMultiplier;
-        event.setBulletSpread(newSpread);
 
         if (plugin.getConfig().getBoolean("debug") && Math.abs(totalMultiplier - 1.0) > 0.001) {
             plugin.getLogger().info(String.format(
-                    "[饰品扩散] 玩家 %s 武器 %s 扩散倍率: %.2f 扩散: %.2f -> %.2f",
-                    player.getName(), weaponId, totalMultiplier, originalSpread, newSpread
+                    "[饰品扩散监听器] 玩家 %s 武器 %s 扩散倍率: %.2f 扩散: %.2f ",
+                    player.getName(), weaponId, totalMultiplier, originalSpread
             ));
         }
     }

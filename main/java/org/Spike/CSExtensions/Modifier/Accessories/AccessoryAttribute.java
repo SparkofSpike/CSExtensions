@@ -1,7 +1,7 @@
 package org.Spike.CSExtensions.Modifier.Accessories;
 
 import org.Spike.CSExtensions.CSExtensions;
-import org.Spike.CSExtensions.Modifier.Accessories.Mythic.ConditionParser;
+import org.Spike.CSExtensions.Modifier.Mythic.core.ConditionParser;;
 
 import java.util.Set;
 

@@ -56,7 +56,7 @@ Conflict_Groups:
 #OK, we've finally finished the introduction. I'm so exhausted.
 accessories:
   attack_ring:
-    name: '&6攻击戒指'
+    name: 'this is name. why it needs a name? who knows?'
     material: GOLD_NUGGET
     data: 0
     lore:
