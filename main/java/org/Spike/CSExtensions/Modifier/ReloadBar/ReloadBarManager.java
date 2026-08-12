@@ -338,6 +338,10 @@ public class ReloadBarManager {
         activeReloads.clear();
     }
 
+    public void cleanupOnQuit(Player player) {
+        cleanupPlayer(player.getUniqueId());
+    }
+
     public void reloadConfig() {
         barMessageManager.reloadConfig();
     }

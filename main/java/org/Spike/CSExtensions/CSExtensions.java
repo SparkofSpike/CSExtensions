@@ -833,6 +833,10 @@ public class CSExtensions extends JavaPlugin implements Listener {
         if (accessoriesManager != null) {
             accessoriesManager.cleanupPlayer(player);
         }
+
+        if (reloadBarManager != null) {
+            reloadBarManager.cleanupOnQuit(player);
+        }
     }
 
     private void testParticleSystem() {
